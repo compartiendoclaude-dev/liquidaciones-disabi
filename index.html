@@ -338,8 +338,8 @@
           <div class="commission-item"><div class="commission-dot" style="background:#22c55e"></div><div><div class="commission-name">FORZA</div><div class="commission-formula">(Cobro ÷ 1.0300465) − $3.20</div></div></div>
           <div class="commission-item"><div class="commission-dot" style="background:#a855f7"></div><div><div class="commission-name">FOURBOX</div><div class="commission-formula">(Cobro ÷ 1.010093) − $3.35</div></div></div>
         </div>
-        <div class="card-title" style="margin-top:14px;">📆 Acumulado por mes</div>
-        <div class="month-grid" id="month-grid"></div>
+        <div class="card-title" style="margin-top:14px;">📆 Resumen del mes en curso</div>
+        <div class="month-grid" id="month-grid" style="grid-template-columns:repeat(2,1fr);"></div>
       </div>
     </div>
 
@@ -368,8 +368,25 @@
       <div><strong id="cred-proximo-count">0</strong> crédito(s) vencen en los próximos 7 días · <strong id="cred-proximo-amt">$0.00</strong></div>
     </div>
 
+    <!-- KPIs: HOY y MAÑANA — lo primero que se debe ver -->
+    <div class="section-label">¿Cuánto nos deben hoy y mañana?</div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="kpi-card today">
+        <div class="kpi-day-label">📅 NOS DEBEN HOY</div>
+        <div class="kpi-date" id="cred-hoy-date">—</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-hoy-amount">0.00</span></div>
+        <div class="kpi-txn-count">🏢 <span id="cred-hoy-count">0</span> factura(s) con pago programado hoy</div>
+      </div>
+      <div class="kpi-card tomorrow">
+        <div class="kpi-day-label">📅 NOS DEBEN MAÑANA</div>
+        <div class="kpi-date" id="cred-man-date">—</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-man-amount">0.00</span></div>
+        <div class="kpi-txn-count">🏢 <span id="cred-man-count">0</span> factura(s) con pago programado mañana</div>
+      </div>
+    </div>
+
     <!-- KPIs créditos -->
-    <div class="section-label">Resumen de cartera pendiente</div>
+    <div class="section-label">Resumen general de cartera pendiente</div>
     <div class="kpi-grid">
       <div class="kpi-card cred-total">
         <div class="kpi-day-label">💳 TOTAL POR COBRAR</div>
@@ -398,6 +415,7 @@
     </div>
 
     <!-- Full table -->
+
     <div class="section-label">Detalle de créditos pendientes</div>
     <div class="card" style="padding:0;">
       <div class="table-wrap">
@@ -483,8 +501,8 @@ function parseExcel(data) {
   for(const sname of wb.SheetNames){
     const upper = sname.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ]/g,'');
 
-    // ── CUENTAS POR COBRAR ──
-    if(upper.includes('CUENTASPORCOBRAR')||upper.includes('CUENTAS')){
+    // ── CUENTAS POR COBRAR (match exacto/estricto, no por inclusión parcial) ──
+    if(upper==='CUENTASPORCOBRAR'){
       const ws=wb.Sheets[sname];
       const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:null,dateNF:'yyyy-mm-dd'});
       let hdr=-1,headers=[];
@@ -493,7 +511,9 @@ function parseExcel(data) {
       }
       if(hdr===-1) continue;
       const col=n=>headers.findIndex(h=>h.toLowerCase().includes(n.toLowerCase()));
-      const cF=col('fecha'),cDoc=col('documento'),cOrden=col('orden'),cCred=col('crédito')||col('credito'),cFPago=col('programada'),cEst=col('estado');
+      const cF=col('fecha'),cDoc=col('documento'),cOrden=col('orden');
+      let cCred=col('crédito'); if(cCred<0) cCred=col('credito');
+      const cFPago=col('programada'),cEst=col('estado');
 
       for(let i=hdr+1;i<raw.length;i++){
         const r=raw[i];
@@ -533,9 +553,10 @@ function parseExcel(data) {
       continue;
     }
 
-    // ── MES NORMAL ──
-    const monthIdx=MONTH_SHEETS.findIndex(m=>upper.includes(m.replace(/[^A-ZÁÉÍÓÚÑ]/g,'')));
+    // ── MES NORMAL (solo procesamos la hoja del MES EN CURSO, ignoramos meses anteriores) ──
+    const monthIdx=MONTH_SHEETS.findIndex(m=>upper===m);
     if(monthIdx===-1) continue;
+    if(monthIdx!==new Date().getMonth()) continue; // ignora cualquier mes que no sea el actual
 
     const ws=wb.Sheets[sname];
     const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:null,dateNF:'yyyy-mm-dd'});
@@ -650,8 +671,15 @@ function renderLiq(cobros) {
   else{pl.innerHTML=Object.entries(pqT).sort((a,b)=>b[1]-a[1]).map(([p,amt])=>{const cnt=pending.filter(r=>r.paquetera===p).length;const pct=(amt/maxP*100).toFixed(0);return`<div><div class="paquetera-header"><span class="paquetera-name" style="color:${paqColor(p)}">${p}</span><span class="paquetera-amount">$${fmtC(amt)}</span></div><div class="paquetera-meta">${cnt} cobro${cnt!==1?'s':''} pendiente${cnt!==1?'s':''}</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${paqColor(p)}"></div></div></div>`; }).join('');}
 
   // Month grid
-  const mt={};for(const r of cobros){if(!mt[r.mes])mt[r.mes]={total:0,count:0};mt[r.mes].total+=parseFloat(r.monto_liquidar||0);mt[r.mes].count++;}
-  document.getElementById('month-grid').innerHTML=Object.entries(mt).sort((a,b)=>a[0]-b[0]).map(([m,{total,count}])=>`<div class="month-tile"><div class="month-tile-name">${MONS_F[m]}</div><div class="month-tile-amount">$${fmtC(total)}</div><div class="month-tile-txns">${count} cobros</div></div>`).join('');
+  // Resumen del mes en curso: liquidado vs pendiente
+  const liquidadoCount = cobros.filter(r=>r.liquidado).length;
+  const liquidadoTotal = cobros.filter(r=>r.liquidado).reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
+  const pendCount = pending.length;
+  const pendTotal = pending.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
+  const mesActualNombre = cobros.length ? MONS_F[cobros[0].mes] : MONS_F[new Date().getMonth()];
+  document.getElementById('month-grid').innerHTML=`
+    <div class="month-tile"><div class="month-tile-name">✓ Liquidado (${mesActualNombre})</div><div class="month-tile-amount" style="color:var(--green)">$${fmtC(liquidadoTotal)}</div><div class="month-tile-txns">${liquidadoCount} cobros</div></div>
+    <div class="month-tile"><div class="month-tile-name">⏳ Pendiente (${mesActualNombre})</div><div class="month-tile-amount" style="color:var(--gold)">$${fmtC(pendTotal)}</div><div class="month-tile-txns">${pendCount} cobros</div></div>`;
 
   // Table
   const tbody=document.getElementById('detail-table-body');
@@ -664,10 +692,24 @@ function renderLiq(cobros) {
 // ── RENDER CRÉDITOS ───────────────────────────────────
 function renderCred(creditos) {
   const today=stripTime(new Date());
+  const tomorrow=new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
   const soon=new Date(today); soon.setDate(soon.getDate()+7);
 
-  // Solo pendientes (no abonadas)
+  // Solo pendientes (no abonadas) — esto es lo que NO nos han pagado aún
   const pending=creditos.filter(r=>!r.abonada);
+
+  // HOY y MAÑANA — indicadores principales
+  const dueToday=pending.filter(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago).getTime()===today.getTime());
+  const dueTomorrow=pending.filter(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago).getTime()===tomorrow.getTime());
+  const tHoy=dueToday.reduce((s,r)=>s+r.monto,0);
+  const tMan=dueTomorrow.reduce((s,r)=>s+r.monto,0);
+
+  document.getElementById('cred-hoy-date').textContent=fmtD(today);
+  document.getElementById('cred-hoy-amount').textContent=fmtC(tHoy);
+  document.getElementById('cred-hoy-count').textContent=dueToday.length;
+  document.getElementById('cred-man-date').textContent=fmtD(tomorrow);
+  document.getElementById('cred-man-amount').textContent=fmtC(tMan);
+  document.getElementById('cred-man-count').textContent=dueTomorrow.length;
 
   // KPI buckets
   const vencidos=pending.filter(r=>{ if(r.indefinida||!r.fecha_pago)return false; return parseDate(r.fecha_pago)<today; });
@@ -839,12 +881,19 @@ async function processFile(file) {
   reader.onload=async(e)=>{
     try{
       const {cobros,creditos}=parseExcel(new Uint8Array(e.target.result));
-      if(!cobros.length&&!creditos.length){toast('No se encontraron datos en el archivo.','err',5000);return;}
+      console.log(`Parseo: ${cobros.length} cobros, ${creditos.length} créditos`);
+      if(!cobros.length&&!creditos.length){
+        toast('No se encontraron datos. Revisa la consola del navegador (F12) para más detalle.','err',7000);
+        return;
+      }
       const uid=await uploadToSupabase(cobros,creditos,file.name);
       activeUploadId=uid;
       const [meta]=await sbGet('liquidacion_uploads',`id=eq.${uid}`);
       await loadAndRender(uid,meta);
-    }catch(err){console.error(err);}
+    }catch(err){
+      console.error('Error procesando archivo:',err);
+      toast('Error: '+err.message,'err',7000);
+    }
   };
   reader.readAsArrayBuffer(file);
 }
