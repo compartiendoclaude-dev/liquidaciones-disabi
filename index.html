@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Liquidaciones</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg:#0f1117; --surface:#181c27; --surface2:#1e2333; --border:#2a3050;
+    --accent:#3b7bff; --accent-soft:rgba(59,123,255,0.12);
+    --gold:#f5a623; --gold-soft:rgba(245,166,35,0.12);
+    --green:#22c55e; --green-soft:rgba(34,197,94,0.12);
+    --red:#ef4444; --red-soft:rgba(239,68,68,0.12);
+    --purple:#a855f7; --purple-soft:rgba(168,85,247,0.12);
+    --orange:#fb923c; --orange-soft:rgba(251,146,60,0.12);
+    --text:#e8ecf4; --muted:#6b7a9e;
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+
+  /* HEADER */
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .header-left{display:flex;align-items:center;gap:12px;}
+  .logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#6f3bff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff;}
+  .header-title{font-size:15px;font-weight:700;}
+  .header-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+  .header-right{display:flex;align-items:center;gap:8px;}
+  .db-status{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;}
+  .db-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+  .db-dot.ok{background:var(--green);}  .db-dot.err{background:var(--red);}
+  .header-date{font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;}
+  #today-label{color:var(--text);font-weight:600;}
+
+  /* TABS */
+  .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:2px;}
+  .tab-btn{padding:12px 18px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.18s;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--text);border-bottom-color:var(--accent);}
+  .tab-btn .tab-badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;}
+  .tab-btn .tab-badge.gold{background:var(--gold);}
+  .tab-content{display:none;} .tab-content.active{display:block;}
+
+  /* UPLOAD */
+  .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:32px 28px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);margin:22px 24px;}
+  .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-soft);}
+  .upload-icon{font-size:34px;margin-bottom:10px;}
+  .upload-title{font-size:15px;font-weight:600;margin-bottom:6px;}
+  .upload-hint{font-size:12px;color:var(--muted);}
+  .upload-hint span{color:var(--accent);font-weight:600;cursor:pointer;}
+  #file-input{display:none;}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;min-width:340px;text-align:center;}
+  .modal-title{font-size:15px;font-weight:700;margin-bottom:6px;}
+  .modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+  .progress-outer{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+  .progress-inner{height:100%;background:linear-gradient(90deg,var(--accent),#6f3bff);border-radius:4px;transition:width 0.3s;}
+  #upload-step{font-size:12px;color:var(--muted);}
+
+  /* MAIN */
+  .main{padding:0 24px 40px;display:none;}
+
+  /* FILE BAR */
+  .file-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:18px;}
+  .file-bar-left{display:flex;align-items:center;gap:10px;}
+  .file-badge{background:var(--green-soft);color:var(--green);border:1px solid rgba(34,197,94,0.3);border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;}
+  .file-name{font-size:13px;font-weight:600;}
+  .file-meta{font-size:11px;color:var(--muted);}
+  .bar-actions{display:flex;gap:8px;}
+  .btn{border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s;border:1px solid var(--border);}
+  .btn-ghost{background:none;color:var(--muted);}
+  .btn-ghost:hover{border-color:var(--red);color:var(--red);}
+  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn-primary:hover{opacity:0.85;}
+
+  /* HISTORY */
+  .history-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:none;}
+  .history-bar-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px;}
+  .history-list{display:flex;flex-direction:column;gap:6px;}
+  .history-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;}
+  .history-item:hover{border-color:var(--accent);}
+  .history-item.active{border-color:var(--accent);background:var(--accent-soft);}
+  .history-item-name{font-size:12px;font-weight:600;}
+  .history-item-meta{font-size:11px;color:var(--muted);}
+  .history-item-del{font-size:11px;color:var(--muted);padding:3px 7px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;}
+  .history-item-del:hover{color:var(--red);border-color:var(--red);}
+
+  /* SECTION LABEL */
+  .section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:transform 0.15s;}
+  .kpi-card:hover{transform:translateY(-2px);}
+  .kpi-card.today{border-color:var(--accent);}
+  .kpi-card.today::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#6f3bff);}
+  .kpi-card.tomorrow{border-color:var(--gold);}
+  .kpi-card.tomorrow::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),#ff9500);}
+  .kpi-card.next{border-color:var(--purple);}
+  .kpi-card.next::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--purple),#6f3bff);}
+  .kpi-card.cred-danger{border-color:var(--red);}
+  .kpi-card.cred-danger::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),#ff6b6b);}
+  .kpi-card.cred-warn{border-color:var(--orange);}
+  .kpi-card.cred-warn::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--gold));}
+  .kpi-card.cred-total{border-color:var(--accent);}
+  .kpi-card.cred-total::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#6f3bff);}
+  .kpi-day-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+  .kpi-card.today .kpi-day-label{color:var(--accent);}
+  .kpi-card.tomorrow .kpi-day-label{color:var(--gold);}
+  .kpi-card.next .kpi-day-label{color:var(--purple);}
+  .kpi-card.cred-danger .kpi-day-label{color:var(--red);}
+  .kpi-card.cred-warn .kpi-day-label{color:var(--orange);}
+  .kpi-card.cred-total .kpi-day-label{color:var(--accent);}
+  .kpi-date{font-size:11px;color:var(--muted);margin-bottom:14px;}
+  .kpi-amount{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px;}
+  .kpi-card.today .kpi-amount{color:var(--accent);}
+  .kpi-card.tomorrow .kpi-amount{color:var(--gold);}
+  .kpi-card.next .kpi-amount{color:var(--purple);}
+  .kpi-card.cred-danger .kpi-amount{color:var(--red);}
+  .kpi-card.cred-warn .kpi-amount{color:var(--orange);}
+  .kpi-card.cred-total .kpi-amount{color:var(--accent);}
+  .kpi-currency{font-size:13px;font-weight:500;margin-right:2px;}
+  .kpi-breakdown{margin-top:12px;display:flex;flex-direction:column;gap:5px;}
+  .kpi-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+  .kpi-row-label{display:flex;align-items:center;gap:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .kpi-row-amount{font-weight:600;font-variant-numeric:tabular-nums;}
+  .kpi-txn-count{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
+
+  /* CARDS */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;}
+  .card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:14px;}
+
+  /* PAQUETERA */
+  .paquetera-list{display:flex;flex-direction:column;gap:12px;}
+  .paquetera-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .paquetera-name{font-size:13px;font-weight:700;}
+  .paquetera-amount{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .paquetera-meta{font-size:11px;color:var(--muted);}
+  .progress-bar{height:5px;background:var(--border);border-radius:3px;margin-top:5px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:3px;transition:width 0.6s ease;}
+
+  /* COMMISSION */
+  .commission-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
+  .commission-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;}
+  .commission-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+  .commission-name{font-size:12px;font-weight:700;}
+  .commission-formula{font-size:10px;color:var(--muted);}
+
+  /* MONTH */
+  .month-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .month-tile{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+  .month-tile-name{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:4px;}
+  .month-tile-amount{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .month-tile-txns{font-size:10px;color:var(--muted);margin-top:1px;}
+
+  /* CLIENT CARDS (créditos) */
+  .client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:24px;}
+  .client-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:transform 0.15s;}
+  .client-card:hover{transform:translateY(-2px);}
+  .client-card.vencido{border-color:var(--red);}
+  .client-card.vencido::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);}
+  .client-card.proximo{border-color:var(--orange);}
+  .client-card.proximo::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--orange);}
+  .client-card.futuro::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--border);}
+  .client-card.indefinido{border-color:var(--muted);}
+  .client-card.indefinido::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--muted);}
+  .client-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+  .client-docs{font-size:10px;color:var(--muted);margin-bottom:10px;}
+  .client-amount{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text);margin-bottom:8px;}
+  .client-amount span{font-size:13px;font-weight:500;}
+  .client-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);}
+  .client-date{font-size:11px;color:var(--muted);}
+  .client-date strong{color:var(--text);}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--border);}
+  tbody tr{border-bottom:1px solid rgba(42,48,80,0.5);transition:background 0.12s;}
+  tbody tr:hover{background:var(--surface2);}
+  tbody td{padding:9px 10px;font-size:12px;vertical-align:middle;}
+  .badge{display:inline-flex;align-items:center;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;}
+  .badge-xpress{background:rgba(59,123,255,0.15);color:#3b7bff;}
+  .badge-rapi{background:rgba(245,166,35,0.15);color:#f5a623;}
+  .badge-forza{background:rgba(34,197,94,0.15);color:#22c55e;}
+  .badge-fourbox{background:rgba(168,85,247,0.15);color:#a855f7;}
+  .badge-other{background:var(--surface2);color:var(--muted);}
+  .tag{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;}
+  .tag-today{background:var(--accent-soft);color:var(--accent);border:1px solid rgba(59,123,255,0.3);}
+  .tag-tomorrow{background:var(--gold-soft);color:var(--gold);border:1px solid rgba(245,166,35,0.3);}
+  .tag-next{background:var(--purple-soft);color:var(--purple);border:1px solid rgba(168,85,247,0.3);}
+  .tag-past{background:var(--red-soft);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+  .tag-soon{background:var(--orange-soft);color:var(--orange);border:1px solid rgba(251,146,60,0.3);}
+  .tag-indef{background:var(--surface2);color:var(--muted);}
+  .tag-future{background:var(--surface2);color:var(--muted);}
+
+  /* ALERTS */
+  .alert-bar{border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:13px;}
+  .alert-bar.red{background:var(--red-soft);border:1px solid rgba(239,68,68,0.35);}
+  .alert-bar.orange{background:var(--orange-soft);border:1px solid rgba(251,146,60,0.35);}
+
+  /* EMPTY */
+  .empty-state{text-align:center;padding:28px 20px;color:var(--muted);font-size:13px;}
+  .empty-state .emoji{font-size:26px;margin-bottom:8px;}
+
+  /* TOAST */
+  .toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:300;}
+  .toast{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,0.4);animation:slideIn 0.25s ease;max-width:320px;display:flex;align-items:center;gap:8px;}
+  .toast.ok{border-color:rgba(34,197,94,0.4);}
+  .toast.err{border-color:rgba(239,68,68,0.4);}
+  @keyframes slideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">$</div>
+    <div>
+      <div class="header-title">Liquidaciones &amp; Créditos</div>
+      <div class="header-sub">Control de cobros — paqueteras y crédito</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="db-status">
+      <div class="db-dot" id="db-dot"></div>
+      <span id="db-status-text">Conectando…</span>
+    </div>
+    <div class="header-date"><span id="today-label">—</span></div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tab-bar" id="tab-bar" style="display:none;">
+  <button class="tab-btn active" onclick="switchTab('tab-liq',this)">
+    📦 Liquidaciones paqueteras
+  </button>
+  <button class="tab-btn" onclick="switchTab('tab-cred',this)" id="tab-cred-btn">
+    💳 Créditos pendientes
+    <span class="tab-badge gold" id="cred-badge" style="display:none;">0</span>
+  </button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal-box">
+    <div class="modal-title">Procesando archivo…</div>
+    <div class="modal-sub" id="modal-filename">—</div>
+    <div class="progress-outer"><div class="progress-inner" id="progress-bar" style="width:0%"></div></div>
+    <div id="upload-step">Leyendo Excel…</div>
+  </div>
+</div>
+
+<!-- UPLOAD ZONE -->
+<div class="upload-zone" id="upload-zone">
+  <input type="file" id="file-input" accept=".xlsx,.xls">
+  <div class="upload-icon">📂</div>
+  <div class="upload-title">Arrastra aquí el archivo de Liquidaciones</div>
+  <div class="upload-hint">O <span onclick="document.getElementById('file-input').click()">selecciona el archivo</span> · Se guardará en Supabase al subir</div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main-content">
+
+  <!-- File bar -->
+  <div class="file-bar">
+    <div class="file-bar-left">
+      <span class="file-badge">☁ Sincronizado</span>
+      <div>
+        <div class="file-name" id="loaded-filename">—</div>
+        <div class="file-meta" id="loaded-meta">—</div>
+      </div>
+    </div>
+    <div class="bar-actions">
+      <button class="btn btn-primary" onclick="showUploadZone()">⬆ Actualizar datos</button>
+      <button class="btn btn-ghost" onclick="toggleHistory()">🕑 Historial</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-bar" id="history-bar">
+    <div class="history-bar-title">Cargas anteriores</div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- ═══════════════ TAB 1: LIQUIDACIONES ═══════════════ -->
+  <div class="tab-content active" id="tab-liq">
+
+    <!-- Overdue alert -->
+    <div class="alert-bar red" id="overdue-alert" style="display:none;">
+      <span style="font-size:18px;">⚠️</span>
+      <div><strong id="overdue-count">0</strong> liquidaciones vencidas (más de 48 h hábiles sin depósito) · <strong id="overdue-amount">$0.00</strong></div>
+    </div>
+
+    <div class="section-label">Pagos esperados por fecha (cobros sin liquidar)</div>
+    <div class="kpi-grid">
+      <div class="kpi-card today">
+        <div class="kpi-day-label">📅 HOY</div>
+        <div class="kpi-date" id="kpi-today-date">—</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="kpi-today-amount">0.00</span></div>
+        <div class="kpi-breakdown" id="kpi-today-breakdown"></div>
+        <div class="kpi-txn-count">🧾 <span id="kpi-today-count">0</span> cobros pendientes</div>
+      </div>
+      <div class="kpi-card tomorrow">
+        <div class="kpi-day-label">📅 MAÑANA</div>
+        <div class="kpi-date" id="kpi-tom-date">—</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="kpi-tom-amount">0.00</span></div>
+        <div class="kpi-breakdown" id="kpi-tom-breakdown"></div>
+        <div class="kpi-txn-count">🧾 <span id="kpi-tom-count">0</span> cobros esperados</div>
+      </div>
+      <div class="kpi-card next">
+        <div class="kpi-day-label" id="kpi-next-label">📅 PRÓXIMO DÍA</div>
+        <div class="kpi-date" id="kpi-next-date">—</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="kpi-next-amount">0.00</span></div>
+        <div class="kpi-breakdown" id="kpi-next-breakdown"></div>
+        <div class="kpi-txn-count">🧾 <span id="kpi-next-count">0</span> cobros esperados</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">⚡ Pendientes por paquetera</div>
+        <div class="paquetera-list" id="paquetera-list"><div class="empty-state"><div class="emoji">📦</div>Sin datos</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💡 Comisiones aplicadas</div>
+        <div class="commission-grid">
+          <div class="commission-item"><div class="commission-dot" style="background:#3b7bff"></div><div><div class="commission-name">XPRESS</div><div class="commission-formula">(Cobro ÷ 1.0257) − $3.90</div></div></div>
+          <div class="commission-item"><div class="commission-dot" style="background:#f5a623"></div><div><div class="commission-name">RAPI</div><div class="commission-formula">(Cobro ÷ 1.01) − $3.50</div></div></div>
+          <div class="commission-item"><div class="commission-dot" style="background:#22c55e"></div><div><div class="commission-name">FORZA</div><div class="commission-formula">(Cobro ÷ 1.0300465) − $3.20</div></div></div>
+          <div class="commission-item"><div class="commission-dot" style="background:#a855f7"></div><div><div class="commission-name">FOURBOX</div><div class="commission-formula">(Cobro ÷ 1.010093) − $3.35</div></div></div>
+        </div>
+        <div class="card-title" style="margin-top:14px;">📆 Acumulado por mes</div>
+        <div class="month-grid" id="month-grid"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Detalle de cobros pendientes</div>
+    <div class="card" style="padding:0;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fecha venta</th><th>Depósito esperado</th><th>Cliente</th><th>Paquetera</th><th>Cobro</th><th>A Liquidar</th><th>Estado</th></tr></thead>
+          <tbody id="detail-table-body"><tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Sin datos</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-liq -->
+
+  <!-- ═══════════════ TAB 2: CRÉDITOS ═══════════════ -->
+  <div class="tab-content" id="tab-cred">
+
+    <!-- Alerts -->
+    <div class="alert-bar red" id="cred-vencido-alert" style="display:none;">
+      <span style="font-size:18px;">🚨</span>
+      <div><strong id="cred-vencido-count">0</strong> crédito(s) vencido(s) sin cobrar · <strong id="cred-vencido-amt">$0.00</strong></div>
+    </div>
+    <div class="alert-bar orange" id="cred-proximo-alert" style="display:none;">
+      <span style="font-size:18px;">⏰</span>
+      <div><strong id="cred-proximo-count">0</strong> crédito(s) vencen en los próximos 7 días · <strong id="cred-proximo-amt">$0.00</strong></div>
+    </div>
+
+    <!-- KPIs créditos -->
+    <div class="section-label">Resumen de cartera pendiente</div>
+    <div class="kpi-grid">
+      <div class="kpi-card cred-total">
+        <div class="kpi-day-label">💳 TOTAL POR COBRAR</div>
+        <div class="kpi-date" id="cred-kpi-total-sub">—</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-kpi-total">0.00</span></div>
+        <div class="kpi-txn-count">🏢 <span id="cred-kpi-clientes">0</span> clientes con saldo</div>
+      </div>
+      <div class="kpi-card cred-danger">
+        <div class="kpi-day-label">🚨 VENCIDO</div>
+        <div class="kpi-date" id="cred-kpi-venc-sub">Fecha de pago pasada</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-kpi-venc">0.00</span></div>
+        <div class="kpi-txn-count">📋 <span id="cred-kpi-venc-cnt">0</span> facturas</div>
+      </div>
+      <div class="kpi-card cred-warn">
+        <div class="kpi-day-label">⏰ PRÓXIMOS 7 DÍAS</div>
+        <div class="kpi-date" id="cred-kpi-soon-sub">Vence pronto</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-kpi-soon">0.00</span></div>
+        <div class="kpi-txn-count">📋 <span id="cred-kpi-soon-cnt">0</span> facturas</div>
+      </div>
+    </div>
+
+    <!-- Client summary cards -->
+    <div class="section-label">Por cliente</div>
+    <div class="client-grid" id="client-grid">
+      <div class="empty-state"><div class="emoji">🏢</div>Sin créditos pendientes</div>
+    </div>
+
+    <!-- Full table -->
+    <div class="section-label">Detalle de créditos pendientes</div>
+    <div class="card" style="padding:0;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fecha factura</th><th>Documento</th><th>Cliente</th><th>Monto</th><th>Fecha pago</th><th>Días restantes</th><th>Estado</th></tr></thead>
+          <tbody id="cred-table-body"><tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Sin datos</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-cred -->
+
+</div><!-- /main -->
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── SUPABASE ──────────────────────────────────────────
+const SB_URL = 'https://ylsouysqlkzlfwkbvitt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlsc291eXNxbGt6bGZ3a2J2aXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4OTc0NDQsImV4cCI6MjA5NTQ3MzQ0NH0.zT6IpElm6KgVduSMDpsSc1Y7I0zkoqYvX9Bo4Wyrkhw';
+const SB_H = { 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' };
+
+const sbGet = async (t,q='') => { const r=await fetch(`${SB_URL}/rest/v1/${t}?${q}`,{headers:SB_H}); if(!r.ok) throw new Error(`GET ${t}: ${r.status}`); return r.json(); };
+const sbPost = async (t,b) => { const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:SB_H,body:JSON.stringify(b)}); if(!r.ok){const x=await r.text();throw new Error(`POST ${t}: ${r.status} — ${x}`);}  return r.json(); };
+const sbDel = async (t,m) => { const p=Object.entries(m).map(([k,v])=>`${k}=eq.${v}`).join('&'); const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{method:'DELETE',headers:SB_H}); if(!r.ok) throw new Error(`DEL ${t}: ${r.status}`); };
+
+// ── LOCALE ────────────────────────────────────────────
+const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MONS_S=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MONS_F=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+const stripTime = d => new Date(d.getFullYear(),d.getMonth(),d.getDate());
+const toISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parseDate = s => { if(!s) return null; if(s instanceof Date) return stripTime(s); const[y,m,d]=String(s).split('-').map(Number); return new Date(y,m-1,d); };
+const fmtD = d => { if(!d) return '—'; const dt=parseDate(d); return `${DAYS[dt.getDay()]} ${dt.getDate()} ${MONS_S[dt.getMonth()]}`; };
+const fmtC = n => (parseFloat(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const diffDays = (a,b) => Math.round((b-a)/(1000*60*60*24));
+
+const nextBizDay = d => { let n=new Date(d); do{ n.setDate(n.getDate()+1); }while(n.getDay()===0); return n; };
+const addBizDays = (d,n) => { let dt=new Date(d),a=0; while(a<n){dt.setDate(dt.getDate()+1);if(dt.getDay()!==0)a++;} return dt; };
+
+const paqColor = p=>({'XPRESS':'#3b7bff','RAPI':'#f5a623','FORZA':'#22c55e','FOURBOX':'#a855f7'}[(p||'').toUpperCase()]||'#6b7a9e');
+const paqBadge = p=>{const u=(p||'').toUpperCase();const c={XPRESS:'badge-xpress',RAPI:'badge-rapi',FORZA:'badge-forza',FOURBOX:'badge-fourbox'}[u]||'badge-other';return`<span class="badge ${c}">${p}</span>`;};
+const calcMonto = (p,j) => { const u=(p||'').toUpperCase(),n=parseFloat(j)||0; if(u==='XPRESS')return(n/1.0257)-3.9; if(u==='RAPI')return(n/1.01)-3.5; if(u==='FORZA')return(n/1.0300465)-3.2; if(u==='FOURBOX')return(n/1.010093)-3.35; return n; };
+
+// ── TOAST ─────────────────────────────────────────────
+const toast = (msg,type='ok',dur=3500) => {
+  const el=document.createElement('div'); el.className=`toast ${type}`;
+  el.innerHTML=`<span>${type==='ok'?'✓':'✕'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),dur);
+};
+
+// ── CLOCK ─────────────────────────────────────────────
+const updateClock = () => {
+  const n=new Date();
+  document.getElementById('today-label').textContent=`${DAYS[n.getDay()]} ${n.getDate()} ${MONS_F[n.getMonth()]} · ${n.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})}`;
+};
+updateClock(); setInterval(updateClock,30000);
+
+// ── TABS ──────────────────────────────────────────────
+const switchTab = (id, btn) => {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+};
+
+// ── DB STATUS ─────────────────────────────────────────
+const checkDB = async () => {
+  const dot=document.getElementById('db-dot'), txt=document.getElementById('db-status-text');
+  try{ await sbGet('liquidacion_uploads','limit=1'); dot.className='db-dot ok'; txt.textContent='Supabase OK'; }
+  catch(e){ dot.className='db-dot err'; txt.textContent='Sin conexión'; }
+};
+
+// ── EXCEL PARSING ─────────────────────────────────────
+const MONTH_SHEETS = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+function parseExcel(data) {
+  const wb = XLSX.read(data,{type:'array',cellDates:true});
+  const cobros=[], creditos=[];
+
+  for(const sname of wb.SheetNames){
+    const upper = sname.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ]/g,'');
+
+    // ── CUENTAS POR COBRAR ──
+    if(upper.includes('CUENTASPORCOBRAR')||upper.includes('CUENTAS')){
+      const ws=wb.Sheets[sname];
+      const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:null,dateNF:'yyyy-mm-dd'});
+      let hdr=-1,headers=[];
+      for(let i=0;i<Math.min(5,raw.length);i++){
+        if(raw[i]&&raw[i].some(c=>c&&String(c).toLowerCase().includes('fecha'))){hdr=i;headers=raw[i].map(h=>(h||'').toString().trim());break;}
+      }
+      if(hdr===-1) continue;
+      const col=n=>headers.findIndex(h=>h.toLowerCase().includes(n.toLowerCase()));
+      const cF=col('fecha'),cDoc=col('documento'),cOrden=col('orden'),cCred=col('crédito')||col('credito'),cFPago=col('programada'),cEst=col('estado');
+
+      for(let i=hdr+1;i<raw.length;i++){
+        const r=raw[i];
+        if(!r||!r[cF]) continue;
+        const credAmt=cCred>=0?parseFloat(r[cCred]):null;
+        if(!credAmt||isNaN(credAmt)||credAmt<=0) continue;
+        // Skip totals row
+        if(r[cF]&&String(r[cF]).toUpperCase().includes('TOTAL')) continue;
+
+        const fechaRaw=r[cF];
+        const fecha=fechaRaw instanceof Date?fechaRaw:new Date(fechaRaw);
+        if(isNaN(fecha)) continue;
+
+        const estado=(cEst>=0?r[cEst]:'');
+        const estadoStr=estado?String(estado).trim().toUpperCase():'';
+        const abonado=estadoStr==='ABONADA';
+
+        const fpRaw=cFPago>=0?r[cFPago]:null;
+        let fechaPago=null;
+        if(fpRaw&&fpRaw!='INDEFINIDA'){
+          fechaPago=fpRaw instanceof Date?fpRaw:new Date(fpRaw);
+          if(isNaN(fechaPago)) fechaPago=null;
+        }
+        const indefinida=fpRaw==='INDEFINIDA'||String(fpRaw||'').toUpperCase()==='INDEFINIDA';
+
+        creditos.push({
+          fecha_factura: toISO(stripTime(fecha)),
+          documento: cDoc>=0?(r[cDoc]||''):'',
+          cliente: cOrden>=0?(r[cOrden]||'—'):'—',
+          monto: parseFloat(credAmt.toFixed(2)),
+          fecha_pago: fechaPago?toISO(stripTime(fechaPago)):null,
+          indefinida: indefinida,
+          abonada: abonado,
+          estado: estadoStr||'PENDIENTE',
+        });
+      }
+      continue;
+    }
+
+    // ── MES NORMAL ──
+    const monthIdx=MONTH_SHEETS.findIndex(m=>upper.includes(m.replace(/[^A-ZÁÉÍÓÚÑ]/g,'')));
+    if(monthIdx===-1) continue;
+
+    const ws=wb.Sheets[sname];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:null,dateNF:'yyyy-mm-dd'});
+    if(raw.length<2) continue;
+
+    let hdr=-1,headers=[];
+    for(let i=0;i<Math.min(5,raw.length);i++){
+      if(raw[i]&&raw[i].some(c=>c&&String(c).toLowerCase().includes('fecha'))){hdr=i;headers=raw[i].map(h=>(h||'').toString().trim());break;}
+    }
+    if(hdr===-1) continue;
+
+    const col=n=>headers.findIndex(h=>h.toLowerCase().includes(n.toLowerCase()));
+    const cF=col('fecha'),cCl=col('cliente'),cCo=col('contraentrega'),cP=col('paquetera'),cL=col('liquidado'),cMR=col('monto real'),cD=col('documento');
+
+    for(let i=hdr+1;i<raw.length;i++){
+      const r=raw[i];
+      if(!r||!r[cF]) continue;
+      const paq=cP>=0?r[cP]:null;
+      if(!paq||String(paq).trim()==='') continue;
+      const fechaRaw=r[cF];
+      const fecha=fechaRaw instanceof Date?fechaRaw:new Date(fechaRaw);
+      if(isNaN(fecha)) continue;
+      const contra=cCo>=0?parseFloat(r[cCo])||0:0;
+      if(contra===0) continue;
+      const mr=cMR>=0?parseFloat(r[cMR]):null;
+      const liq=cL>=0?r[cL]:null;
+      const liquidado=(mr&&!isNaN(mr)&&mr>0)||(liq&&String(liq).toLowerCase()==='sí');
+      const monto=Math.max(0,calcMonto(paq,contra));
+      const fs=stripTime(fecha);
+      const dep=addBizDays(fs,2);
+      cobros.push({hoja:sname,mes:monthIdx,fecha_venta:toISO(fs),deposito_esperado:toISO(dep),documento:cD>=0?(r[cD]||''):'',cliente:cCl>=0?(r[cCl]||'—'):'—',paquetera:String(paq).trim().toUpperCase(),contraentrega:parseFloat(contra.toFixed(2)),monto_liquidar:parseFloat(monto.toFixed(2)),liquidado:Boolean(liquidado),monto_real:mr&&!isNaN(mr)?parseFloat(mr.toFixed(2)):null});
+    }
+  }
+  return {cobros, creditos};
+}
+
+// ── UPLOAD TO SUPABASE ────────────────────────────────
+async function uploadToSupabase(cobros, creditos, filename) {
+  const modal=document.getElementById('upload-modal');
+  const pb=document.getElementById('progress-bar');
+  const step=document.getElementById('upload-step');
+  document.getElementById('modal-filename').textContent=filename;
+  modal.classList.add('show');
+  const prog=(p,m)=>{ pb.style.width=p+'%'; step.textContent=m; };
+
+  try{
+    prog(8,'Registrando carga…');
+    const [rec]=await sbPost('liquidacion_uploads',{filename,total_cobros:cobros.length,total_monto:parseFloat(cobros.reduce((s,r)=>s+r.monto_liquidar,0).toFixed(2))});
+    const uid=rec.id;
+
+    // Cobros en chunks
+    const CHUNK=200;
+    for(let ci=0;ci<Math.ceil(cobros.length/CHUNK);ci++){
+      prog(8+Math.round((ci/Math.ceil(cobros.length/CHUNK))*50),`Cobros… (${Math.min((ci+1)*CHUNK,cobros.length)}/${cobros.length})`);
+      await sbPost('liquidacion_cobros',cobros.slice(ci*CHUNK,(ci+1)*CHUNK).map(r=>({...r,upload_id:uid})));
+    }
+
+    // Créditos: borrar los del mismo upload_id si volvieran a subir
+    prog(62,'Guardando créditos…');
+    if(creditos.length>0){
+      for(let ci=0;ci<Math.ceil(creditos.length/CHUNK);ci++){
+        await sbPost('liquidacion_creditos',creditos.slice(ci*CHUNK,(ci+1)*CHUNK).map(r=>({...r,upload_id:uid})));
+      }
+    }
+
+    prog(100,'¡Listo!');
+    await new Promise(r=>setTimeout(r,500));
+    modal.classList.remove('show');
+    toast(`${cobros.length} cobros y ${creditos.length} créditos guardados`,'ok');
+    return uid;
+  } catch(e){
+    modal.classList.remove('show');
+    toast('Error: '+e.message,'err',7000);
+    throw e;
+  }
+}
+
+// ── RENDER LIQUIDACIONES ──────────────────────────────
+function renderLiq(cobros) {
+  const today=stripTime(new Date()), tom=nextBizDay(today), nn=nextBizDay(tom);
+  const pending=cobros.filter(r=>!r.liquidado);
+  const overdue=pending.filter(r=>{ const d=parseDate(r.deposito_esperado); return d&&d<today; });
+
+  const bucket=dep=>{ if(!dep)return'future'; const t=dep.getTime(),td=today.getTime(); if(t===td)return'today'; if(t===tom.getTime())return'tomorrow'; if(t===nn.getTime())return'next'; if(t<td)return'past'; return'future'; };
+  const agg=lbl=>{ const items=pending.filter(r=>bucket(parseDate(r.deposito_esperado))===lbl); const total=items.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0); const byP={}; for(const r of items)byP[r.paquetera]=(byP[r.paquetera]||0)+parseFloat(r.monto_liquidar||0); return{total,count:items.length,byP}; };
+
+  const ta=agg('today'),toa=agg('tomorrow'),na=agg('next');
+  document.getElementById('kpi-today-date').textContent=fmtD(today);
+  document.getElementById('kpi-tom-date').textContent=fmtD(tom);
+  document.getElementById('kpi-next-date').textContent=fmtD(nn);
+  document.getElementById('kpi-next-label').textContent='📅 '+DAYS[nn.getDay()].toUpperCase();
+  document.getElementById('kpi-today-amount').textContent=fmtC(ta.total);
+  document.getElementById('kpi-tom-amount').textContent=fmtC(toa.total);
+  document.getElementById('kpi-next-amount').textContent=fmtC(na.total);
+  document.getElementById('kpi-today-count').textContent=ta.count;
+  document.getElementById('kpi-tom-count').textContent=toa.count;
+  document.getElementById('kpi-next-count').textContent=na.count;
+
+  const bd=byP=>Object.entries(byP).map(([p,a])=>`<div class="kpi-row"><span class="kpi-row-label"><span class="dot" style="background:${paqColor(p)}"></span>${p}</span><span class="kpi-row-amount">$${fmtC(a)}</span></div>`).join('');
+  document.getElementById('kpi-today-breakdown').innerHTML=bd(ta.byP);
+  document.getElementById('kpi-tom-breakdown').innerHTML=bd(toa.byP);
+  document.getElementById('kpi-next-breakdown').innerHTML=bd(na.byP);
+
+  const oa=document.getElementById('overdue-alert');
+  if(overdue.length){const ot=overdue.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);oa.style.display='flex';document.getElementById('overdue-count').textContent=overdue.length;document.getElementById('overdue-amount').textContent='$'+fmtC(ot);}else{oa.style.display='none';}
+
+  // Paquetera bars
+  const pqT={};for(const r of pending)pqT[r.paquetera]=(pqT[r.paquetera]||0)+parseFloat(r.monto_liquidar||0);
+  const maxP=Math.max(...Object.values(pqT),1);
+  const pl=document.getElementById('paquetera-list');
+  if(!Object.keys(pqT).length){pl.innerHTML='<div class="empty-state"><div class="emoji">✅</div>Todas liquidadas</div>';}
+  else{pl.innerHTML=Object.entries(pqT).sort((a,b)=>b[1]-a[1]).map(([p,amt])=>{const cnt=pending.filter(r=>r.paquetera===p).length;const pct=(amt/maxP*100).toFixed(0);return`<div><div class="paquetera-header"><span class="paquetera-name" style="color:${paqColor(p)}">${p}</span><span class="paquetera-amount">$${fmtC(amt)}</span></div><div class="paquetera-meta">${cnt} cobro${cnt!==1?'s':''} pendiente${cnt!==1?'s':''}</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${paqColor(p)}"></div></div></div>`; }).join('');}
+
+  // Month grid
+  const mt={};for(const r of cobros){if(!mt[r.mes])mt[r.mes]={total:0,count:0};mt[r.mes].total+=parseFloat(r.monto_liquidar||0);mt[r.mes].count++;}
+  document.getElementById('month-grid').innerHTML=Object.entries(mt).sort((a,b)=>a[0]-b[0]).map(([m,{total,count}])=>`<div class="month-tile"><div class="month-tile-name">${MONS_F[m]}</div><div class="month-tile-amount">$${fmtC(total)}</div><div class="month-tile-txns">${count} cobros</div></div>`).join('');
+
+  // Table
+  const tbody=document.getElementById('detail-table-body');
+  const rows=pending.sort((a,b)=>new Date(a.deposito_esperado)-new Date(b.deposito_esperado));
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">🎉 Sin cobros pendientes</td></tr>`;return;}
+  const tagMap={today:`<span class="tag tag-today">HOY</span>`,tomorrow:`<span class="tag tag-tomorrow">MAÑANA</span>`,past:`<span class="tag tag-past">VENCIDO</span>`};
+  tbody.innerHTML=rows.map(r=>{const dep=parseDate(r.deposito_esperado);const b=bucket(dep);const tag=tagMap[b]||(b==='next'?`<span class="tag tag-next">${DAYS[dep.getDay()].toUpperCase()}</span>`:`<span class="tag tag-future">${fmtD(dep)}</span>`);return`<tr><td>${fmtD(r.fecha_venta)}</td><td>${fmtD(r.deposito_esperado)} ${tag}</td><td>${r.cliente}</td><td>${paqBadge(r.paquetera)}</td><td style="font-variant-numeric:tabular-nums;">$${fmtC(r.contraentrega)}</td><td style="font-weight:700;font-variant-numeric:tabular-nums;color:var(--green);">$${fmtC(r.monto_liquidar)}</td><td>${r.liquidado?'<span style="color:var(--green)">✓ Liquidado</span>':'<span style="color:var(--muted)">Pendiente</span>'}</td></tr>`;}).join('');
+}
+
+// ── RENDER CRÉDITOS ───────────────────────────────────
+function renderCred(creditos) {
+  const today=stripTime(new Date());
+  const soon=new Date(today); soon.setDate(soon.getDate()+7);
+
+  // Solo pendientes (no abonadas)
+  const pending=creditos.filter(r=>!r.abonada);
+
+  // KPI buckets
+  const vencidos=pending.filter(r=>{ if(r.indefinida||!r.fecha_pago)return false; return parseDate(r.fecha_pago)<today; });
+  const proximos=pending.filter(r=>{ if(r.indefinida||!r.fecha_pago)return false; const d=parseDate(r.fecha_pago); return d>=today&&d<=soon; });
+  const tvenc=vencidos.reduce((s,r)=>s+r.monto,0);
+  const tprox=proximos.reduce((s,r)=>s+r.monto,0);
+  const ttotal=pending.reduce((s,r)=>s+r.monto,0);
+
+  // Alerts
+  const va=document.getElementById('cred-vencido-alert');
+  const pa=document.getElementById('cred-proximo-alert');
+  if(vencidos.length){va.style.display='flex';document.getElementById('cred-vencido-count').textContent=vencidos.length;document.getElementById('cred-vencido-amt').textContent='$'+fmtC(tvenc);}else{va.style.display='none';}
+  if(proximos.length){pa.style.display='flex';document.getElementById('cred-proximo-count').textContent=proximos.length;document.getElementById('cred-proximo-amt').textContent='$'+fmtC(tprox);}else{pa.style.display='none';}
+
+  // Badge on tab
+  const badge=document.getElementById('cred-badge');
+  if(vencidos.length){badge.style.display='inline';badge.textContent=vencidos.length;}else{badge.style.display='none';}
+
+  // KPIs
+  const uniqueClients=new Set(pending.map(r=>r.cliente.toUpperCase().trim())).size;
+  document.getElementById('cred-kpi-total').textContent=fmtC(ttotal);
+  document.getElementById('cred-kpi-total-sub').textContent=`${pending.length} factura${pending.length!==1?'s':''} sin cobrar`;
+  document.getElementById('cred-kpi-clientes').textContent=uniqueClients;
+  document.getElementById('cred-kpi-venc').textContent=fmtC(tvenc);
+  document.getElementById('cred-kpi-venc-sub').textContent=vencidos.length?`Desde ${fmtD(vencidos.sort((a,b)=>new Date(a.fecha_pago)-new Date(b.fecha_pago))[0].fecha_pago)}`:'Sin vencidos';
+  document.getElementById('cred-kpi-venc-cnt').textContent=vencidos.length;
+  document.getElementById('cred-kpi-soon').textContent=fmtC(tprox);
+  document.getElementById('cred-kpi-soon-sub').textContent=`Próximos 7 días`;
+  document.getElementById('cred-kpi-soon-cnt').textContent=proximos.length;
+
+  // Client cards — group by client
+  const byClient={};
+  for(const r of pending){
+    const k=r.cliente.toUpperCase().trim();
+    if(!byClient[k])byClient[k]={nombre:r.cliente,total:0,facturas:[]};
+    byClient[k].total+=r.monto;
+    byClient[k].facturas.push(r);
+  }
+  // sort: vencido > proximo > futuro > indefinido
+  const clientScore=(c)=>{
+    const hasVenc=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);
+    const hasProx=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);
+    const hasIndef=c.facturas.some(r=>r.indefinida);
+    if(hasVenc)return 0; if(hasProx)return 1; if(!hasIndef)return 2; return 3;
+  };
+
+  const cg=document.getElementById('client-grid');
+  if(!Object.keys(byClient).length){cg.innerHTML='<div class="empty-state"><div class="emoji">🎉</div>Sin créditos pendientes</div>';return;}
+  cg.innerHTML=Object.values(byClient).sort((a,b)=>clientScore(a)-clientScore(b)).map(c=>{
+    const hasVenc=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);
+    const hasProx=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);
+    const hasIndef=c.facturas.some(r=>r.indefinida);
+    const cls=hasVenc?'vencido':hasProx?'proximo':hasIndef?'indefinido':'futuro';
+    // Next due date
+    const nextDue=c.facturas.filter(r=>r.fecha_pago&&!r.indefinida).sort((a,b)=>new Date(a.fecha_pago)-new Date(b.fecha_pago))[0];
+    const dueTxt=hasIndef&&!nextDue?'Fecha: INDEFINIDA':nextDue?`Próximo: <strong>${fmtD(nextDue.fecha_pago)}</strong>`:'Sin fecha';
+    const statusIcon=hasVenc?'🚨':hasProx?'⏰':hasIndef?'❓':'📅';
+    return`<div class="client-card ${cls}">
+      <div class="client-name">${statusIcon} ${c.facturas[0].cliente}</div>
+      <div class="client-docs">${c.facturas.length} factura${c.facturas.length!==1?'s':''}</div>
+      <div class="client-amount"><span>$</span>${fmtC(c.total)}</div>
+      <div class="client-footer"><div class="client-date">${dueTxt}</div></div>
+    </div>`;
+  }).join('');
+
+  // Detail table
+  const tbody=document.getElementById('cred-table-body');
+  const rows=pending.sort((a,b)=>{
+    const da=a.indefinida?new Date('2099-12-31'):a.fecha_pago?new Date(a.fecha_pago):new Date('2099-12-31');
+    const db=b.indefinida?new Date('2099-12-31'):b.fecha_pago?new Date(b.fecha_pago):new Date('2099-12-31');
+    return da-db;
+  });
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Sin créditos pendientes</td></tr>`;return;}
+  tbody.innerHTML=rows.map(r=>{
+    const dp=r.fecha_pago?parseDate(r.fecha_pago):null;
+    const diff=dp?diffDays(today,dp):null;
+    let statusTag,diasTxt;
+    if(r.indefinida){statusTag=`<span class="tag tag-indef">INDEFINIDA</span>`;diasTxt='—';}
+    else if(!dp){statusTag=`<span class="tag tag-indef">SIN FECHA</span>`;diasTxt='—';}
+    else if(dp<today){const d=Math.abs(diff);statusTag=`<span class="tag tag-past">VENCIDO</span>`;diasTxt=`<span style="color:var(--red);font-weight:700;">-${d} día${d!==1?'s':''}</span>`;}
+    else if(dp<=soon){statusTag=`<span class="tag tag-soon">PRÓXIMO</span>`;diasTxt=`<span style="color:var(--orange);font-weight:700;">${diff} día${diff!==1?'s':''}</span>`;}
+    else{statusTag=`<span class="tag tag-future">PENDIENTE</span>`;diasTxt=`${diff} días`;}
+    return`<tr>
+      <td>${fmtD(r.fecha_factura)}</td>
+      <td style="font-size:11px;color:var(--muted);">${r.documento}</td>
+      <td style="font-weight:600;">${r.cliente}</td>
+      <td style="font-weight:700;font-variant-numeric:tabular-nums;">$${fmtC(r.monto)}</td>
+      <td>${r.indefinida?'<span style="color:var(--muted)">INDEFINIDA</span>':fmtD(r.fecha_pago)}</td>
+      <td>${diasTxt}</td>
+      <td>${statusTag}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── LOAD & RENDER ─────────────────────────────────────
+async function loadAndRender(uploadId, uploadMeta) {
+  const cobros=await sbGet('liquidacion_cobros',`upload_id=eq.${uploadId}&order=deposito_esperado.asc`);
+  const creditos=await sbGet('liquidacion_creditos',`upload_id=eq.${uploadId}`);
+
+  renderLiq(cobros||[]);
+  renderCred(creditos||[]);
+
+  const pending=(cobros||[]).filter(r=>!r.liquidado);
+  const credPend=(creditos||[]).filter(r=>!r.abonada);
+  const ts=new Date(uploadMeta.uploaded_at);
+  document.getElementById('loaded-filename').textContent=uploadMeta.filename;
+  document.getElementById('loaded-meta').textContent=`${(cobros||[]).length} cobros · ${pending.length} pendientes · ${credPend.length} créditos · Subido ${ts.toLocaleDateString('es-SV')} ${ts.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})}`;
+
+  document.getElementById('upload-zone').style.display='none';
+  document.getElementById('main-content').style.display='block';
+  document.getElementById('tab-bar').style.display='flex';
+}
+
+// ── FILE HANDLING ─────────────────────────────────────
+const showUploadZone = () => {
+  document.getElementById('upload-zone').style.display='block';
+  document.getElementById('main-content').style.display='none';
+  document.getElementById('tab-bar').style.display='none';
+};
+
+let historyVisible=false, activeUploadId=null;
+const toggleHistory = async () => {
+  const bar=document.getElementById('history-bar');
+  historyVisible=!historyVisible;
+  if(!historyVisible){bar.style.display='none';return;}
+  bar.style.display='block';
+  await refreshHistory();
+};
+
+const refreshHistory = async () => {
+  const list=document.getElementById('history-list');
+  list.innerHTML='<div style="color:var(--muted);font-size:12px;padding:4px;">Cargando…</div>';
+  try{
+    const uploads=await sbGet('liquidacion_uploads','order=uploaded_at.desc&limit=10');
+    if(!uploads||!uploads.length){list.innerHTML='<div class="empty-state" style="padding:8px 0;"><div>Sin historial</div></div>';return;}
+    list.innerHTML=uploads.map(u=>{
+      const ts=new Date(u.uploaded_at);
+      return`<div class="history-item ${u.id===activeUploadId?'active':''}" onclick="selectUpload('${u.id}')">
+        <div><div class="history-item-name">${u.filename}</div><div class="history-item-meta">${u.total_cobros} cobros · $${fmtC(u.total_monto)} · ${ts.toLocaleDateString('es-SV')} ${ts.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})}</div></div>
+        <button class="history-item-del" onclick="deleteUpload(event,'${u.id}')">✕</button>
+      </div>`;
+    }).join('');
+  }catch(e){list.innerHTML='<div style="color:var(--red);font-size:12px;padding:4px;">Error</div>';}
+};
+
+const selectUpload = async (uid) => {
+  activeUploadId=uid;
+  const [meta]=await sbGet('liquidacion_uploads',`id=eq.${uid}`);
+  await loadAndRender(uid,meta);
+  await refreshHistory();
+  toast('Carga seleccionada','ok');
+};
+
+const deleteUpload = async (e,uid) => {
+  e.stopPropagation();
+  if(!confirm('¿Eliminar esta carga y todos sus datos?'))return;
+  try{
+    await sbDel('liquidacion_creditos',{upload_id:uid});
+    await sbDel('liquidacion_cobros',{upload_id:uid});
+    await sbDel('liquidacion_uploads',{id:uid});
+    toast('Eliminado','ok');
+    await refreshHistory();
+    if(uid===activeUploadId) await initDashboard();
+  }catch(e){toast('Error: '+e.message,'err');}
+};
+
+async function processFile(file) {
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try{
+      const {cobros,creditos}=parseExcel(new Uint8Array(e.target.result));
+      if(!cobros.length&&!creditos.length){toast('No se encontraron datos en el archivo.','err',5000);return;}
+      const uid=await uploadToSupabase(cobros,creditos,file.name);
+      activeUploadId=uid;
+      const [meta]=await sbGet('liquidacion_uploads',`id=eq.${uid}`);
+      await loadAndRender(uid,meta);
+    }catch(err){console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+document.getElementById('file-input').addEventListener('change',e=>{if(e.target.files[0])processFile(e.target.files[0]);});
+const zone=document.getElementById('upload-zone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('dragover');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+zone.addEventListener('click',()=>document.getElementById('file-input').click());
+
+// ── INIT ──────────────────────────────────────────────
+async function initDashboard(){
+  await checkDB();
+  try{
+    const uploads=await sbGet('liquidacion_uploads','order=uploaded_at.desc&limit=1');
+    if(uploads&&uploads.length){
+      activeUploadId=uploads[0].id;
+      await loadAndRender(uploads[0].id,uploads[0]);
+    }
+  }catch(e){console.warn('Supabase init:',e.message);}
+}
+initDashboard();
+</script>
+</body>
+</html>
