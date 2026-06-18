@@ -21,48 +21,49 @@
   body{background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
 
   /* HEADER */
-  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:10px;}
   .header-left{display:flex;align-items:center;gap:12px;}
-  .logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#6f3bff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff;}
+  .logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#6f3bff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff;flex-shrink:0;}
   .header-title{font-size:15px;font-weight:700;}
   .header-sub{font-size:11px;color:var(--muted);margin-top:1px;}
-  .header-right{display:flex;align-items:center;gap:8px;}
+  .header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;}
   .db-status{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;}
   .db-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
   .db-dot.ok{background:var(--green);}  .db-dot.err{background:var(--red);}
   .header-date{font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;}
   #today-label{color:var(--text);font-weight:600;}
+  .btn-upload-compact{display:inline-flex;align-items:center;gap:5px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:7px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;transition:opacity 0.15s;}
+  .btn-upload-compact:active{opacity:0.75;}
 
   /* TABS */
-  .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:2px;}
-  .tab-btn{padding:12px 18px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.18s;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+  .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tab-btn{padding:12px 18px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.18s;white-space:nowrap;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
   .tab-btn:hover{color:var(--text);}
   .tab-btn.active{color:var(--text);border-bottom-color:var(--accent);}
   .tab-btn .tab-badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;}
   .tab-btn .tab-badge.gold{background:var(--gold);}
   .tab-content{display:none;} .tab-content.active{display:block;}
 
-  /* UPLOAD */
-  .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:32px 28px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);margin:22px 24px;}
-  .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-soft);}
-  .upload-icon{font-size:34px;margin-bottom:10px;}
-  .upload-title{font-size:15px;font-weight:600;margin-bottom:6px;}
-  .upload-hint{font-size:12px;color:var(--muted);}
-  .upload-hint span{color:var(--accent);font-weight:600;cursor:pointer;}
-  #file-input{display:none;}
+  /* COMPACT DROPZONE (small bar, not the giant box) */
+  .dropzone-compact{border:1.5px dashed var(--border);border-radius:10px;padding:10px 16px;margin:14px 24px;display:flex;align-items:center;gap:10px;justify-content:center;font-size:12px;color:var(--muted);transition:all 0.2s;}
+  .dropzone-compact.dragover{border-color:var(--accent);background:var(--accent-soft);color:var(--text);}
+  .dropzone-icon{font-size:16px;}
+  .dropzone-text strong{color:var(--accent);}
+
 
   /* MODAL */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;}
   .modal-overlay.show{display:flex;}
-  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;min-width:340px;text-align:center;}
+  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;min-width:340px;max-width:90vw;text-align:center;}
   .modal-title{font-size:15px;font-weight:700;margin-bottom:6px;}
   .modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
   .progress-outer{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px;}
   .progress-inner{height:100%;background:linear-gradient(90deg,var(--accent),#6f3bff);border-radius:4px;transition:width 0.3s;}
   #upload-step{font-size:12px;color:var(--muted);}
 
-  /* MAIN */
-  .main{padding:0 24px 40px;display:none;}
+  /* MAIN — visible siempre, incluso sin datos (KPIs muestran 0) */
+  .main{padding:0 24px 40px;display:block;}
+
 
   /* FILE BAR */
   .file-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:18px;}
@@ -211,11 +212,62 @@
   .empty-state .emoji{font-size:26px;margin-bottom:8px;}
 
   /* TOAST */
-  .toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:300;}
+  .toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:300;max-width:calc(100vw - 32px);}
   .toast{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,0.4);animation:slideIn 0.25s ease;max-width:320px;display:flex;align-items:center;gap:8px;}
   .toast.ok{border-color:rgba(34,197,94,0.4);}
   .toast.err{border-color:rgba(239,68,68,0.4);}
   @keyframes slideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ═══════════ RESPONSIVE: TABLET Y MÓVIL (Android / iOS) ═══════════ */
+  @media (max-width: 860px) {
+    .header{padding:12px 16px;}
+    .header-title{font-size:14px;}
+    .header-sub{display:none;}
+    .header-right{gap:6px;}
+    .db-status{display:none;}
+    .header-date{font-size:11px;padding:5px 8px;}
+    .btn-upload-compact{padding:7px 11px;font-size:11px;}
+
+    .tab-bar{padding:0 12px;}
+    .tab-btn{padding:11px 12px;font-size:12px;}
+
+    .dropzone-compact{margin:12px 16px;padding:9px 12px;font-size:11px;}
+
+    .main{padding:0 16px 32px;}
+    .file-bar{flex-wrap:wrap;gap:10px;padding:10px 12px;}
+    .bar-actions{width:100%;}
+    .bar-actions .btn{flex:1;justify-content:center;display:flex;}
+
+    .kpi-grid{grid-template-columns:1fr;gap:12px;}
+    .two-col{grid-template-columns:1fr;gap:14px;}
+    .commission-grid{grid-template-columns:1fr 1fr;}
+    .client-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+
+    .kpi-amount{font-size:26px;}
+    .card{padding:14px;}
+
+    table{font-size:11px;}
+    thead th{padding:7px 8px;font-size:9px;}
+    tbody td{padding:8px;}
+  }
+
+  @media (max-width: 480px) {
+    .header-date{display:none;}
+    .commission-grid{grid-template-columns:1fr;}
+    .month-grid{grid-template-columns:1fr 1fr !important;}
+    .kpi-card{padding:14px;}
+    .client-grid{grid-template-columns:1fr 1fr;}
+    /* Tabla con scroll horizontal en vez de comprimirse demasiado */
+    .table-wrap{-webkit-overflow-scrolling:touch;}
+    table{min-width:560px;}
+  }
+
+  /* Mejoras táctiles generales para Android/iOS */
+  button, .btn, .tab-btn, .btn-upload-compact, .history-item, .history-item-del {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  input, select, textarea { font-size: 16px; } /* evita auto-zoom de iOS al enfocar */
 </style>
 </head>
 <body>
@@ -235,11 +287,15 @@
       <span id="db-status-text">Conectando…</span>
     </div>
     <div class="header-date"><span id="today-label">—</span></div>
+    <label for="file-input" class="btn-upload-compact" id="upload-btn">
+      ⬆ Subir Excel
+    </label>
+    <input type="file" id="file-input" accept=".xlsx,.xls" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;">
   </div>
 </header>
 
 <!-- TABS -->
-<div class="tab-bar" id="tab-bar" style="display:none;">
+<div class="tab-bar" id="tab-bar">
   <button class="tab-btn active" onclick="switchTab('tab-liq',this)">
     📦 Liquidaciones paqueteras
   </button>
@@ -259,19 +315,17 @@
   </div>
 </div>
 
-<!-- UPLOAD ZONE -->
-<div class="upload-zone" id="upload-zone">
-  <input type="file" id="file-input" accept=".xlsx,.xls">
-  <div class="upload-icon">📂</div>
-  <div class="upload-title">Arrastra aquí el archivo de Liquidaciones</div>
-  <div class="upload-hint">O <span onclick="document.getElementById('file-input').click()">selecciona el archivo</span> · Se guardará en Supabase al subir</div>
+<!-- Drag & drop overlay zone (optional, compact, sits above content) -->
+<div class="dropzone-compact" id="upload-zone">
+  <span class="dropzone-icon">📂</span>
+  <span class="dropzone-text">Arrastra tu Excel aquí, o usa <strong>⬆ Subir Excel</strong> arriba</span>
 </div>
 
 <!-- MAIN -->
 <div class="main" id="main-content">
 
-  <!-- File bar -->
-  <div class="file-bar">
+  <!-- File bar (oculta hasta que haya al menos una carga) -->
+  <div class="file-bar" id="file-bar" style="display:none;">
     <div class="file-bar-left">
       <span class="file-badge">☁ Sincronizado</span>
       <div>
@@ -280,7 +334,6 @@
       </div>
     </div>
     <div class="bar-actions">
-      <button class="btn btn-primary" onclick="showUploadZone()">⬆ Actualizar datos</button>
       <button class="btn btn-ghost" onclick="toggleHistory()">🕑 Historial</button>
     </div>
   </div>
@@ -289,6 +342,7 @@
   <div class="history-bar" id="history-bar">
     <div class="history-bar-title">Cargas anteriores</div>
     <div class="history-list" id="history-list"></div>
+
   </div>
 
   <!-- ═══════════════ TAB 1: LIQUIDACIONES ═══════════════ -->
@@ -818,17 +872,9 @@ async function loadAndRender(uploadId, uploadMeta) {
   document.getElementById('loaded-filename').textContent=uploadMeta.filename;
   document.getElementById('loaded-meta').textContent=`${(cobros||[]).length} cobros · ${pending.length} pendientes · ${credPend.length} créditos · Subido ${ts.toLocaleDateString('es-SV')} ${ts.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})}`;
 
-  document.getElementById('upload-zone').style.display='none';
-  document.getElementById('main-content').style.display='block';
-  document.getElementById('tab-bar').style.display='flex';
+  document.getElementById('file-bar').style.display='flex';
 }
 
-// ── FILE HANDLING ─────────────────────────────────────
-const showUploadZone = () => {
-  document.getElementById('upload-zone').style.display='block';
-  document.getElementById('main-content').style.display='none';
-  document.getElementById('tab-bar').style.display='none';
-};
 
 let historyVisible=false, activeUploadId=null;
 const toggleHistory = async () => {
@@ -903,10 +949,13 @@ const zone=document.getElementById('upload-zone');
 zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover');});
 zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
 zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('dragover');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
-zone.addEventListener('click',()=>document.getElementById('file-input').click());
 
 // ── INIT ──────────────────────────────────────────────
 async function initDashboard(){
+  // Renderiza primero en cero para que los indicadores de fecha (hoy/mañana) se vean de inmediato
+  renderLiq([]);
+  renderCred([]);
+
   await checkDB();
   try{
     const uploads=await sbGet('liquidacion_uploads','order=uploaded_at.desc&limit=1');
