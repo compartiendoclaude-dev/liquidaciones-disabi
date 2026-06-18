@@ -513,7 +513,14 @@ const addBizDays = (d,n) => { let dt=new Date(d),a=0; while(a<n){dt.setDate(dt.g
 
 const paqColor = p=>({'XPRESS':'#3b7bff','RAPI':'#f5a623','FORZA':'#22c55e','FOURBOX':'#a855f7'}[(p||'').toUpperCase()]||'#6b7a9e');
 const paqBadge = p=>{const u=(p||'').toUpperCase();const c={XPRESS:'badge-xpress',RAPI:'badge-rapi',FORZA:'badge-forza',FOURBOX:'badge-fourbox'}[u]||'badge-other';return`<span class="badge ${c}">${p}</span>`;};
-const calcMonto = (p,j) => { const u=(p||'').toUpperCase(),n=parseFloat(j)||0; if(u==='XPRESS')return(n/1.0257)-3.9; if(u==='RAPI')return(n/1.01)-3.5; if(u==='FORZA')return(n/1.0300465)-3.2; if(u==='FOURBOX')return(n/1.010093)-3.35; return n; };
+// Limpia números que vienen formateados como moneda/texto: " $68.50 " -> 68.5, "1,234.56" -> 1234.56
+const cleanNum = (v) => {
+  if (v === null || v === undefined || v === '') return NaN;
+  if (typeof v === 'number') return v;
+  const cleaned = String(v).replace(/[^0-9.\-]/g, '');
+  return cleaned === '' ? NaN : parseFloat(cleaned);
+};
+const calcMonto = (p,j) => { const u=(p||'').toUpperCase(),n=cleanNum(j)||0; if(u==='XPRESS')return(n/1.0257)-3.9; if(u==='RAPI')return(n/1.01)-3.5; if(u==='FORZA')return(n/1.0300465)-3.2; if(u==='FOURBOX')return(n/1.010093)-3.35; return n; };
 
 // ── TOAST ─────────────────────────────────────────────
 const toast = (msg,type='ok',dur=3500) => {
@@ -572,7 +579,7 @@ function parseExcel(data) {
       for(let i=hdr+1;i<raw.length;i++){
         const r=raw[i];
         if(!r||!r[cF]) continue;
-        const credAmt=cCred>=0?parseFloat(r[cCred]):null;
+        const credAmt=cCred>=0?cleanNum(r[cCred]):null;
         if(!credAmt||isNaN(credAmt)||credAmt<=0) continue;
         // Skip totals row
         if(r[cF]&&String(r[cF]).toUpperCase().includes('TOTAL')) continue;
@@ -633,11 +640,11 @@ function parseExcel(data) {
       const fechaRaw=r[cF];
       const fecha=fechaRaw instanceof Date?fechaRaw:new Date(fechaRaw);
       if(isNaN(fecha)) continue;
-      const contra=cCo>=0?parseFloat(r[cCo])||0:0;
-      if(contra===0) continue;
-      const mr=cMR>=0?parseFloat(r[cMR]):null;
+      const contra=cCo>=0?(cleanNum(r[cCo])||0):0;
+      if(!contra) continue;
+      const mr=cMR>=0?cleanNum(r[cMR]):null;
       const liq=cL>=0?r[cL]:null;
-      const liquidado=(mr&&!isNaN(mr)&&mr>0)||(liq&&String(liq).toLowerCase()==='sí');
+      const liquidado=(mr&&!isNaN(mr)&&mr>0)||(liq&&String(liq).trim().toLowerCase()==='sí');
       const monto=Math.max(0,calcMonto(paq,contra));
       const fs=stripTime(fecha);
       const dep=addBizDays(fs,2);
