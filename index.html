@@ -251,23 +251,97 @@
     tbody td{padding:8px;}
   }
 
-  @media (max-width: 480px) {
-    .header-date{display:none;}
-    .commission-grid{grid-template-columns:1fr;}
-    .month-grid{grid-template-columns:1fr 1fr !important;}
-    .kpi-card{padding:14px;}
-    .client-grid{grid-template-columns:1fr 1fr;}
-    /* Tabla con scroll horizontal en vez de comprimirse demasiado */
-    .table-wrap{-webkit-overflow-scrolling:touch;}
-    table{min-width:560px;}
+  /* KPI cards hoy/mañana/próximo */
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:transform 0.15s;}
+  .kpi-card:hover{transform:translateY(-2px);}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+  .kpi-card.kc-today{border-color:var(--accent);}
+  .kpi-card.kc-today::before{background:linear-gradient(90deg,var(--accent),#6f3bff);}
+  .kpi-card.kc-today .kpi-day-label{color:var(--accent);}
+  .kpi-card.kc-today .kpi-amount{color:var(--accent);}
+  .kpi-card.kc-tom{border-color:var(--gold);}
+  .kpi-card.kc-tom::before{background:linear-gradient(90deg,var(--gold),#ff9500);}
+  .kpi-card.kc-tom .kpi-day-label{color:var(--gold);}
+  .kpi-card.kc-tom .kpi-amount{color:var(--gold);}
+  .kpi-card.kc-next{border-color:var(--purple);}
+  .kpi-card.kc-next::before{background:linear-gradient(90deg,var(--purple),#6f3bff);}
+  .kpi-card.kc-next .kpi-day-label{color:var(--purple);}
+  .kpi-card.kc-next .kpi-amount{color:var(--purple);}
+  .kpi-day-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+  .kpi-date{font-size:11px;color:var(--muted);margin-bottom:12px;}
+  .kpi-amount{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px;}
+  .kpi-currency{font-size:13px;font-weight:500;margin-right:2px;}
+  .kpi-breakdown{margin-top:10px;display:flex;flex-direction:column;gap:4px;}
+  .kpi-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;}
+  .kpi-row-label{display:flex;align-items:center;gap:5px;color:var(--muted);}
+  .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .kpi-row-amount{font-weight:700;font-variant-numeric:tabular-nums;}
+  .kpi-txn-count{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
+
+  /* Chips de día de la semana (créditos) */
+  .semana-chip{padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid var(--border);background:var(--surface2);white-space:nowrap;}
+  .semana-chip.sc-today{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .semana-chip.sc-past{background:var(--red-soft);border-color:rgba(239,68,68,0.4);color:var(--red);}
+  .semana-chip.sc-future{color:var(--text);}
+  .semana-chip .sc-label{font-size:9px;font-weight:600;color:inherit;opacity:0.7;display:block;margin-bottom:1px;}
+  .semana-chip .sc-amt{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;}
+
+  /* Paq chips */
+  .paq-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;}
+
+
+  .timeline-scroll{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 16px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) transparent;margin-bottom:24px;}
+  .timeline-scroll::-webkit-scrollbar{height:4px;}
+  .timeline-scroll::-webkit-scrollbar-track{background:transparent;}
+  .timeline-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .timeline-empty{color:var(--muted);font-size:13px;padding:28px 0;width:100%;text-align:center;}
+  .day-card{flex:0 0 160px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden;transition:transform 0.15s;cursor:default;}
+  .day-card:hover{transform:translateY(-2px);}
+  .day-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+  .day-card.dc-past::before{background:var(--red);}
+  .day-card.dc-today::before{background:linear-gradient(90deg,var(--accent),#6f3bff);}
+  .day-card.dc-tomorrow::before{background:linear-gradient(90deg,var(--gold),#ff9500);}
+  .day-card.dc-future::before{background:var(--border);}
+  .day-card.dc-past{border-color:rgba(239,68,68,0.4);}
+  .day-card.dc-today{border-color:var(--accent);}
+  .day-card.dc-tomorrow{border-color:var(--gold);}
+  .day-card-chip{display:inline-block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;padding:2px 7px;border-radius:4px;margin-bottom:6px;}
+  .dc-past .day-card-chip{background:var(--red-soft);color:var(--red);}
+  .dc-today .day-card-chip{background:var(--accent-soft);color:var(--accent);}
+  .dc-tomorrow .day-card-chip{background:var(--gold-soft);color:var(--gold);}
+  .dc-future .day-card-chip{background:var(--surface2);color:var(--muted);}
+  .day-card-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+  .day-card-date{font-size:11px;color:var(--muted);margin-bottom:10px;}
+  .day-card-amount{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.5px;margin-bottom:6px;}
+  .dc-past .day-card-amount{color:var(--red);}
+  .dc-today .day-card-amount{color:var(--accent);}
+  .dc-tomorrow .day-card-amount{color:var(--gold);}
+  .dc-future .day-card-amount{color:var(--text);}
+  .day-card-breakdown{display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;}
+  .day-card-row{display:flex;justify-content:space-between;font-size:10px;}
+  .day-card-row-name{display:flex;align-items:center;gap:4px;color:var(--muted);}
+  .day-card-row-amt{font-weight:700;font-variant-numeric:tabular-nums;}
+  .day-card-count{font-size:10px;color:var(--muted);margin-bottom:2px;}
+
+  /* ═══ SUMMARY STRIP (créditos) ═══ */
+  .summary-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;}
+  .summary-chip{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;flex:1;min-width:130px;}
+  .summary-chip.danger{border-color:rgba(239,68,68,0.4);background:var(--red-soft);}
+  .summary-chip.warn{border-color:rgba(251,146,60,0.4);background:var(--orange-soft);}
+  .summary-chip-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);margin-bottom:4px;}
+  .summary-chip.danger .summary-chip-label{color:var(--red);}
+  .summary-chip.warn .summary-chip-label{color:var(--orange);}
+  .summary-chip-amount{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:2px;}
+  .summary-chip.danger .summary-chip-amount{color:var(--red);}
+  .summary-chip.warn .summary-chip-amount{color:var(--orange);}
+  .summary-chip-sub{font-size:10px;color:var(--muted);}
+
+  @media(max-width:480px){
+    .day-card{flex:0 0 140px;}
+    .summary-chip{min-width:calc(50% - 5px);}
   }
 
-  /* Mejoras táctiles generales para Android/iOS */
-  button, .btn, .tab-btn, .btn-upload-compact, .history-item, .history-item-del {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-  input, select, textarea { font-size: 16px; } /* evita auto-zoom de iOS al enfocar */
 </style>
 </head>
 <body>
@@ -351,136 +425,120 @@
     <!-- Overdue alert -->
     <div class="alert-bar red" id="overdue-alert" style="display:none;">
       <span style="font-size:18px;">⚠️</span>
-      <div><strong id="overdue-count">0</strong> liquidaciones vencidas (más de 48 h hábiles sin depósito) · <strong id="overdue-amount">$0.00</strong></div>
+      <div><strong id="overdue-count">0</strong> liquidaciones vencidas (más de 48 h hábiles) · <strong id="overdue-amount">$0.00</strong></div>
     </div>
 
-    <div class="section-label">Pagos esperados por fecha (cobros sin liquidar)</div>
+    <!-- KPIs: HOY / MAÑANA / PRÓXIMO DÍA -->
+    <div class="section-label">Cobros de paqueteras pendientes</div>
     <div class="kpi-grid">
-      <div class="kpi-card today">
+      <div class="kpi-card kc-today">
         <div class="kpi-day-label">📅 HOY</div>
         <div class="kpi-date" id="kpi-today-date">—</div>
         <div class="kpi-amount"><span class="kpi-currency">$</span><span id="kpi-today-amount">0.00</span></div>
         <div class="kpi-breakdown" id="kpi-today-breakdown"></div>
-        <div class="kpi-txn-count">🧾 <span id="kpi-today-count">0</span> cobros pendientes</div>
+        <div class="kpi-txn-count">🧾 <span id="kpi-today-count">0</span> cobros</div>
       </div>
-      <div class="kpi-card tomorrow">
+      <div class="kpi-card kc-tom">
         <div class="kpi-day-label">📅 MAÑANA</div>
         <div class="kpi-date" id="kpi-tom-date">—</div>
         <div class="kpi-amount"><span class="kpi-currency">$</span><span id="kpi-tom-amount">0.00</span></div>
         <div class="kpi-breakdown" id="kpi-tom-breakdown"></div>
-        <div class="kpi-txn-count">🧾 <span id="kpi-tom-count">0</span> cobros esperados</div>
+        <div class="kpi-txn-count">🧾 <span id="kpi-tom-count">0</span> cobros</div>
       </div>
-      <div class="kpi-card next">
-        <div class="kpi-day-label" id="kpi-next-label">📅 PRÓXIMO DÍA</div>
+      <div class="kpi-card kc-next">
+        <div class="kpi-day-label" id="kpi-next-label">📅 PRÓXIMO</div>
         <div class="kpi-date" id="kpi-next-date">—</div>
         <div class="kpi-amount"><span class="kpi-currency">$</span><span id="kpi-next-amount">0.00</span></div>
         <div class="kpi-breakdown" id="kpi-next-breakdown"></div>
-        <div class="kpi-txn-count">🧾 <span id="kpi-next-count">0</span> cobros esperados</div>
+        <div class="kpi-txn-count">🧾 <span id="kpi-next-count">0</span> cobros</div>
       </div>
     </div>
 
+    <!-- DOS COLUMNAS: liquidaciones | créditos de la semana -->
+    <div class="two-col">
+
+      <!-- IZQUIERDA: liquidaciones pendientes -->
+      <div class="card" style="padding:0;">
+        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <div class="card-title" style="margin:0;">📦 Liquidaciones pendientes</div>
+          <div id="liq-resumen-mes" style="font-size:11px;color:var(--muted);"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Depósito</th><th>Cliente</th><th>Paq.</th><th>A Liquidar</th></tr></thead>
+            <tbody id="detail-table-body"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:16px;">
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">✓ Liquidado</div>
+            <div style="font-size:16px;font-weight:800;color:var(--green)" id="mes-liquidado">$0.00</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">⏳ Pendiente</div>
+            <div style="font-size:16px;font-weight:800;color:var(--gold)" id="mes-pendiente">$0.00</div>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;" id="paquetera-chips"></div>
+        </div>
+      </div>
+
+      <!-- DERECHA: créditos de la semana -->
+      <div class="card" style="padding:0;">
+        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+          <div class="card-title" style="margin:0;">💳 Créditos pendientes</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="font-size:11px;color:var(--muted);">Esta semana:</div>
+            <div style="font-size:15px;font-weight:800;color:var(--accent)" id="cred-semana-total">$0.00</div>
+          </div>
+        </div>
+        <!-- Chips de días de la semana con montos -->
+        <div id="cred-semana-dias" style="display:flex;gap:6px;padding:0 16px 12px;flex-wrap:wrap;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pago</th><th>Cliente</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody id="cred-table-body"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">💳 Total cartera</div>
+            <div style="font-size:16px;font-weight:800;" id="cred-kpi-total">$0.00</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">🚨 Vencido</div>
+            <div style="font-size:16px;font-weight:800;color:var(--red)" id="cred-kpi-venc">$0.00</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">🏢 Clientes</div>
+            <div style="font-size:16px;font-weight:800;" id="cred-kpi-clientes">0</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /two-col -->
+
+    <!-- Comisiones (colapsado al fondo, referencia) -->
     <div class="two-col">
       <div class="card">
-        <div class="card-title">⚡ Pendientes por paquetera</div>
-        <div class="paquetera-list" id="paquetera-list"><div class="empty-state"><div class="emoji">📦</div>Sin datos</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">💡 Comisiones aplicadas</div>
+        <div class="card-title">💡 Fórmulas de comisión</div>
         <div class="commission-grid">
           <div class="commission-item"><div class="commission-dot" style="background:#3b7bff"></div><div><div class="commission-name">XPRESS</div><div class="commission-formula">(Cobro ÷ 1.0257) − $3.90</div></div></div>
           <div class="commission-item"><div class="commission-dot" style="background:#f5a623"></div><div><div class="commission-name">RAPI</div><div class="commission-formula">(Cobro ÷ 1.01) − $3.50</div></div></div>
           <div class="commission-item"><div class="commission-dot" style="background:#22c55e"></div><div><div class="commission-name">FORZA</div><div class="commission-formula">(Cobro ÷ 1.0300465) − $3.20</div></div></div>
           <div class="commission-item"><div class="commission-dot" style="background:#a855f7"></div><div><div class="commission-name">FOURBOX</div><div class="commission-formula">(Cobro ÷ 1.010093) − $3.35</div></div></div>
         </div>
-        <div class="card-title" style="margin-top:14px;">📆 Resumen del mes en curso</div>
-        <div class="month-grid" id="month-grid" style="grid-template-columns:repeat(2,1fr);"></div>
       </div>
-    </div>
-
-    <div class="section-label">Detalle de cobros pendientes</div>
-    <div class="card" style="padding:0;">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Fecha venta</th><th>Depósito esperado</th><th>Cliente</th><th>Paquetera</th><th>Cobro</th><th>A Liquidar</th><th>Estado</th></tr></thead>
-          <tbody id="detail-table-body"><tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Sin datos</td></tr></tbody>
-        </table>
+      <div class="card">
+        <div class="card-title">📆 Resumen del mes en curso</div>
+        <div class="month-grid" id="month-grid" style="grid-template-columns:repeat(2,1fr);"></div>
       </div>
     </div>
 
   </div><!-- /tab-liq -->
 
-  <!-- ═══════════════ TAB 2: CRÉDITOS ═══════════════ -->
-  <div class="tab-content" id="tab-cred">
+  <!-- TAB 2 vacío (créditos ahora viven en tab-liq, pero mantenemos la pestaña por si se necesita expandir) -->
+  <div class="tab-content" id="tab-cred" style="display:none;"></div>
 
-    <!-- Alerts -->
-    <div class="alert-bar red" id="cred-vencido-alert" style="display:none;">
-      <span style="font-size:18px;">🚨</span>
-      <div><strong id="cred-vencido-count">0</strong> crédito(s) vencido(s) sin cobrar · <strong id="cred-vencido-amt">$0.00</strong></div>
-    </div>
-    <div class="alert-bar orange" id="cred-proximo-alert" style="display:none;">
-      <span style="font-size:18px;">⏰</span>
-      <div><strong id="cred-proximo-count">0</strong> crédito(s) vencen en los próximos 7 días · <strong id="cred-proximo-amt">$0.00</strong></div>
-    </div>
-
-    <!-- KPIs: HOY y MAÑANA — lo primero que se debe ver -->
-    <div class="section-label">¿Cuánto nos deben hoy y mañana?</div>
-    <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);">
-      <div class="kpi-card today">
-        <div class="kpi-day-label">📅 NOS DEBEN HOY</div>
-        <div class="kpi-date" id="cred-hoy-date">—</div>
-        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-hoy-amount">0.00</span></div>
-        <div class="kpi-txn-count">🏢 <span id="cred-hoy-count">0</span> factura(s) con pago programado hoy</div>
-      </div>
-      <div class="kpi-card tomorrow">
-        <div class="kpi-day-label">📅 NOS DEBEN MAÑANA</div>
-        <div class="kpi-date" id="cred-man-date">—</div>
-        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-man-amount">0.00</span></div>
-        <div class="kpi-txn-count">🏢 <span id="cred-man-count">0</span> factura(s) con pago programado mañana</div>
-      </div>
-    </div>
-
-    <!-- KPIs créditos -->
-    <div class="section-label">Resumen general de cartera pendiente</div>
-    <div class="kpi-grid">
-      <div class="kpi-card cred-total">
-        <div class="kpi-day-label">💳 TOTAL POR COBRAR</div>
-        <div class="kpi-date" id="cred-kpi-total-sub">—</div>
-        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-kpi-total">0.00</span></div>
-        <div class="kpi-txn-count">🏢 <span id="cred-kpi-clientes">0</span> clientes con saldo</div>
-      </div>
-      <div class="kpi-card cred-danger">
-        <div class="kpi-day-label">🚨 VENCIDO</div>
-        <div class="kpi-date" id="cred-kpi-venc-sub">Fecha de pago pasada</div>
-        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-kpi-venc">0.00</span></div>
-        <div class="kpi-txn-count">📋 <span id="cred-kpi-venc-cnt">0</span> facturas</div>
-      </div>
-      <div class="kpi-card cred-warn">
-        <div class="kpi-day-label">⏰ PRÓXIMOS 7 DÍAS</div>
-        <div class="kpi-date" id="cred-kpi-soon-sub">Vence pronto</div>
-        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-kpi-soon">0.00</span></div>
-        <div class="kpi-txn-count">📋 <span id="cred-kpi-soon-cnt">0</span> facturas</div>
-      </div>
-    </div>
-
-    <!-- Client summary cards -->
-    <div class="section-label">Por cliente</div>
-    <div class="client-grid" id="client-grid">
-      <div class="empty-state"><div class="emoji">🏢</div>Sin créditos pendientes</div>
-    </div>
-
-    <!-- Full table -->
-
-    <div class="section-label">Detalle de créditos pendientes</div>
-    <div class="card" style="padding:0;">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Fecha factura</th><th>Documento</th><th>Cliente</th><th>Monto</th><th>Fecha pago</th><th>Días restantes</th><th>Estado</th></tr></thead>
-          <tbody id="cred-table-body"><tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Sin datos</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-  </div><!-- /tab-cred -->
 
 </div><!-- /main -->
 
@@ -600,6 +658,21 @@ function parseExcel(data) {
         }
         const indefinida=fpRaw==='INDEFINIDA'||String(fpRaw||'').toUpperCase()==='INDEFINIDA';
 
+        // ── AJUSTE DE DÍA DE PAGO POR CLIENTE ──
+        // THE COFFEE → solo paga lunes (0=Dom,1=Lun,...,5=Vie,6=Sáb)
+        // SAN MARTIN / BARISTA → solo pagan viernes
+        const clienteNorm=(cOrden>=0?(r[cOrden]||''):'').toString().toUpperCase().trim();
+        if(fechaPago && !indefinida){
+          if(clienteNorm.includes('THE COFFEE') || clienteNorm.includes('THECOFFEE')){
+            // Avanzar hasta el próximo lunes (día 1)
+            while(fechaPago.getDay()!==1) fechaPago.setDate(fechaPago.getDate()+1);
+          } else if(clienteNorm.includes('SAN MARTIN') || clienteNorm.includes('SANMARTIN') ||
+                    clienteNorm.includes('BARISTA')){
+            // Avanzar hasta el próximo viernes (día 5)
+            while(fechaPago.getDay()!==5) fechaPago.setDate(fechaPago.getDate()+1);
+          }
+        }
+
         creditos.push({
           fecha_factura: toISO(stripTime(fecha)),
           documento: cDoc>=0?(r[cDoc]||''):'',
@@ -697,172 +770,163 @@ async function uploadToSupabase(cobros, creditos, filename) {
 
 // ── RENDER LIQUIDACIONES ──────────────────────────────
 function renderLiq(cobros) {
-  const today=stripTime(new Date()), tom=nextBizDay(today), nn=nextBizDay(tom);
+  const today=stripTime(new Date());
+  const tom=nextBizDay(today);
+  const nn=nextBizDay(tom);
   const pending=cobros.filter(r=>!r.liquidado);
   const overdue=pending.filter(r=>{ const d=parseDate(r.deposito_esperado); return d&&d<today; });
 
-  const bucket=dep=>{ if(!dep)return'future'; const t=dep.getTime(),td=today.getTime(); if(t===td)return'today'; if(t===tom.getTime())return'tomorrow'; if(t===nn.getTime())return'next'; if(t<td)return'past'; return'future'; };
-  const agg=lbl=>{ const items=pending.filter(r=>bucket(parseDate(r.deposito_esperado))===lbl); const total=items.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0); const byP={}; for(const r of items)byP[r.paquetera]=(byP[r.paquetera]||0)+parseFloat(r.monto_liquidar||0); return{total,count:items.length,byP}; };
+  // Overdue alert
+  const oa=document.getElementById('overdue-alert');
+  if(overdue.length){const ot=overdue.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);oa.style.display='flex';document.getElementById('overdue-count').textContent=overdue.length;document.getElementById('overdue-amount').textContent='$'+fmtC(ot);}
+  else{oa.style.display='none';}
 
-  const ta=agg('today'),toa=agg('tomorrow'),na=agg('next');
-  document.getElementById('kpi-today-date').textContent=fmtD(today);
-  document.getElementById('kpi-tom-date').textContent=fmtD(tom);
-  document.getElementById('kpi-next-date').textContent=fmtD(nn);
-  document.getElementById('kpi-next-label').textContent='📅 '+DAYS[nn.getDay()].toUpperCase();
-  document.getElementById('kpi-today-amount').textContent=fmtC(ta.total);
-  document.getElementById('kpi-tom-amount').textContent=fmtC(toa.total);
-  document.getElementById('kpi-next-amount').textContent=fmtC(na.total);
-  document.getElementById('kpi-today-count').textContent=ta.count;
-  document.getElementById('kpi-tom-count').textContent=toa.count;
-  document.getElementById('kpi-next-count').textContent=na.count;
-
+  // KPI hoy/mañana/próximo
+  const agg=(dateObj)=>{
+    const t=dateObj.getTime();
+    const items=pending.filter(r=>{ const d=parseDate(r.deposito_esperado); return d&&d.getTime()===t; });
+    const total=items.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
+    const byP={};for(const r of items)byP[r.paquetera]=(byP[r.paquetera]||0)+parseFloat(r.monto_liquidar||0);
+    return{total,count:items.length,byP};
+  };
+  const ta=agg(today),toa=agg(tom),na=agg(nn);
   const bd=byP=>Object.entries(byP).map(([p,a])=>`<div class="kpi-row"><span class="kpi-row-label"><span class="dot" style="background:${paqColor(p)}"></span>${p}</span><span class="kpi-row-amount">$${fmtC(a)}</span></div>`).join('');
+
+  document.getElementById('kpi-today-date').textContent=fmtD(today);
+  document.getElementById('kpi-today-amount').textContent=fmtC(ta.total);
+  document.getElementById('kpi-today-count').textContent=ta.count;
   document.getElementById('kpi-today-breakdown').innerHTML=bd(ta.byP);
+  document.getElementById('kpi-tom-date').textContent=fmtD(tom);
+  document.getElementById('kpi-tom-amount').textContent=fmtC(toa.total);
+  document.getElementById('kpi-tom-count').textContent=toa.count;
   document.getElementById('kpi-tom-breakdown').innerHTML=bd(toa.byP);
+  document.getElementById('kpi-next-label').textContent='📅 '+DAYS[nn.getDay()].toUpperCase();
+  document.getElementById('kpi-next-date').textContent=fmtD(nn);
+  document.getElementById('kpi-next-amount').textContent=fmtC(na.total);
+  document.getElementById('kpi-next-count').textContent=na.count;
   document.getElementById('kpi-next-breakdown').innerHTML=bd(na.byP);
 
-  const oa=document.getElementById('overdue-alert');
-  if(overdue.length){const ot=overdue.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);oa.style.display='flex';document.getElementById('overdue-count').textContent=overdue.length;document.getElementById('overdue-amount').textContent='$'+fmtC(ot);}else{oa.style.display='none';}
-
-  // Paquetera bars
-  const pqT={};for(const r of pending)pqT[r.paquetera]=(pqT[r.paquetera]||0)+parseFloat(r.monto_liquidar||0);
-  const maxP=Math.max(...Object.values(pqT),1);
-  const pl=document.getElementById('paquetera-list');
-  if(!Object.keys(pqT).length){pl.innerHTML='<div class="empty-state"><div class="emoji">✅</div>Todas liquidadas</div>';}
-  else{pl.innerHTML=Object.entries(pqT).sort((a,b)=>b[1]-a[1]).map(([p,amt])=>{const cnt=pending.filter(r=>r.paquetera===p).length;const pct=(amt/maxP*100).toFixed(0);return`<div><div class="paquetera-header"><span class="paquetera-name" style="color:${paqColor(p)}">${p}</span><span class="paquetera-amount">$${fmtC(amt)}</span></div><div class="paquetera-meta">${cnt} cobro${cnt!==1?'s':''} pendiente${cnt!==1?'s':''}</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${paqColor(p)}"></div></div></div>`; }).join('');}
-
-  // Month grid
-  // Resumen del mes en curso: liquidado vs pendiente
-  const liquidadoCount = cobros.filter(r=>r.liquidado).length;
-  const liquidadoTotal = cobros.filter(r=>r.liquidado).reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
-  const pendCount = pending.length;
-  const pendTotal = pending.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
-  const mesActualNombre = cobros.length ? MONS_F[cobros[0].mes] : MONS_F[new Date().getMonth()];
-  document.getElementById('month-grid').innerHTML=`
-    <div class="month-tile"><div class="month-tile-name">✓ Liquidado (${mesActualNombre})</div><div class="month-tile-amount" style="color:var(--green)">$${fmtC(liquidadoTotal)}</div><div class="month-tile-txns">${liquidadoCount} cobros</div></div>
-    <div class="month-tile"><div class="month-tile-name">⏳ Pendiente (${mesActualNombre})</div><div class="month-tile-amount" style="color:var(--gold)">$${fmtC(pendTotal)}</div><div class="month-tile-txns">${pendCount} cobros</div></div>`;
-
-  // Table
+  // Tabla liquidaciones pendientes (compacta)
   const tbody=document.getElementById('detail-table-body');
   const rows=pending.sort((a,b)=>new Date(a.deposito_esperado)-new Date(b.deposito_esperado));
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">🎉 Sin cobros pendientes</td></tr>`;return;}
-  const tagMap={today:`<span class="tag tag-today">HOY</span>`,tomorrow:`<span class="tag tag-tomorrow">MAÑANA</span>`,past:`<span class="tag tag-past">VENCIDO</span>`};
-  tbody.innerHTML=rows.map(r=>{const dep=parseDate(r.deposito_esperado);const b=bucket(dep);const tag=tagMap[b]||(b==='next'?`<span class="tag tag-next">${DAYS[dep.getDay()].toUpperCase()}</span>`:`<span class="tag tag-future">${fmtD(dep)}</span>`);return`<tr><td>${fmtD(r.fecha_venta)}</td><td>${fmtD(r.deposito_esperado)} ${tag}</td><td>${r.cliente}</td><td>${paqBadge(r.paquetera)}</td><td style="font-variant-numeric:tabular-nums;">$${fmtC(r.contraentrega)}</td><td style="font-weight:700;font-variant-numeric:tabular-nums;color:var(--green);">$${fmtC(r.monto_liquidar)}</td><td>${r.liquidado?'<span style="color:var(--green)">✓ Liquidado</span>':'<span style="color:var(--muted)">Pendiente</span>'}</td></tr>`;}).join('');
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">🎉 Sin cobros pendientes</td></tr>`;}
+  else{
+    const tagCls=dep=>{if(!dep)return'tag-future';const t=dep.getTime(),td=today.getTime();if(t<td)return'tag-past';if(t===td)return'tag-today';if(t===tom.getTime())return'tag-tomorrow';return'tag-future';};
+    const tagLbl=dep=>{if(!dep)return'—';const t=dep.getTime(),td=today.getTime();if(t<td)return'VENC.';if(t===td)return'HOY';if(t===tom.getTime())return'MÑN';return fmtD(dep);};
+    tbody.innerHTML=rows.map(r=>{
+      const dep=parseDate(r.deposito_esperado);
+      return`<tr>
+        <td><span class="tag ${tagCls(dep)}">${tagLbl(dep)}</span></td>
+        <td style="font-weight:600;font-size:11px;">${r.cliente}</td>
+        <td>${paqBadge(r.paquetera)}</td>
+        <td style="font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;">$${fmtC(r.monto_liquidar)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Footer mes: liquidado vs pendiente
+  const liqTotal=cobros.filter(r=>r.liquidado).reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
+  const pendTotal=pending.reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
+  const mesNombre=cobros.length?MONS_F[cobros[0].mes]:MONS_F[new Date().getMonth()];
+  document.getElementById('mes-liquidado').textContent='$'+fmtC(liqTotal);
+  document.getElementById('mes-pendiente').textContent='$'+fmtC(pendTotal);
+  document.getElementById('liq-resumen-mes').textContent=mesNombre;
+
+  // Paquetera chips en el footer
+  const pqT={};for(const r of pending)pqT[r.paquetera]=(pqT[r.paquetera]||0)+parseFloat(r.monto_liquidar||0);
+  document.getElementById('paquetera-chips').innerHTML=Object.entries(pqT).map(([p,a])=>
+    `<span class="paq-chip badge-${p.toLowerCase()}" style="background:${paqColor(p)}22;color:${paqColor(p)};border:1px solid ${paqColor(p)}44;">${p} $${fmtC(a)}</span>`
+  ).join('');
+
+  // Month grid
+  document.getElementById('month-grid').innerHTML=`
+    <div class="month-tile"><div class="month-tile-name">✓ Liquidado</div><div class="month-tile-amount" style="color:var(--green)">$${fmtC(liqTotal)}</div><div class="month-tile-txns">${cobros.filter(r=>r.liquidado).length} cobros</div></div>
+    <div class="month-tile"><div class="month-tile-name">⏳ Pendiente</div><div class="month-tile-amount" style="color:var(--gold)">$${fmtC(pendTotal)}</div><div class="month-tile-txns">${pending.length} cobros</div></div>`;
 }
 
 // ── RENDER CRÉDITOS ───────────────────────────────────
 function renderCred(creditos) {
   const today=stripTime(new Date());
-  const tomorrow=new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
-  const soon=new Date(today); soon.setDate(soon.getDate()+7);
 
-  // Solo pendientes (no abonadas) — esto es lo que NO nos han pagado aún
+  // Solo no abonados
   const pending=creditos.filter(r=>!r.abonada);
-
-  // HOY y MAÑANA — indicadores principales
-  const dueToday=pending.filter(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago).getTime()===today.getTime());
-  const dueTomorrow=pending.filter(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago).getTime()===tomorrow.getTime());
-  const tHoy=dueToday.reduce((s,r)=>s+r.monto,0);
-  const tMan=dueTomorrow.reduce((s,r)=>s+r.monto,0);
-
-  document.getElementById('cred-hoy-date').textContent=fmtD(today);
-  document.getElementById('cred-hoy-amount').textContent=fmtC(tHoy);
-  document.getElementById('cred-hoy-count').textContent=dueToday.length;
-  document.getElementById('cred-man-date').textContent=fmtD(tomorrow);
-  document.getElementById('cred-man-amount').textContent=fmtC(tMan);
-  document.getElementById('cred-man-count').textContent=dueTomorrow.length;
-
-  // KPI buckets
-  const vencidos=pending.filter(r=>{ if(r.indefinida||!r.fecha_pago)return false; return parseDate(r.fecha_pago)<today; });
-  const proximos=pending.filter(r=>{ if(r.indefinida||!r.fecha_pago)return false; const d=parseDate(r.fecha_pago); return d>=today&&d<=soon; });
-  const tvenc=vencidos.reduce((s,r)=>s+r.monto,0);
-  const tprox=proximos.reduce((s,r)=>s+r.monto,0);
+  const vencidos=pending.filter(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);
   const ttotal=pending.reduce((s,r)=>s+r.monto,0);
+  const tvenc=vencidos.reduce((s,r)=>s+r.monto,0);
+  const uniqueClients=new Set(pending.map(r=>r.cliente.toUpperCase().trim())).size;
 
-  // Alerts
-  const va=document.getElementById('cred-vencido-alert');
-  const pa=document.getElementById('cred-proximo-alert');
-  if(vencidos.length){va.style.display='flex';document.getElementById('cred-vencido-count').textContent=vencidos.length;document.getElementById('cred-vencido-amt').textContent='$'+fmtC(tvenc);}else{va.style.display='none';}
-  if(proximos.length){pa.style.display='flex';document.getElementById('cred-proximo-count').textContent=proximos.length;document.getElementById('cred-proximo-amt').textContent='$'+fmtC(tprox);}else{pa.style.display='none';}
-
-  // Badge on tab
+  // Badge en pestaña
   const badge=document.getElementById('cred-badge');
   if(vencidos.length){badge.style.display='inline';badge.textContent=vencidos.length;}else{badge.style.display='none';}
 
-  // KPIs
-  const uniqueClients=new Set(pending.map(r=>r.cliente.toUpperCase().trim())).size;
-  document.getElementById('cred-kpi-total').textContent=fmtC(ttotal);
-  document.getElementById('cred-kpi-total-sub').textContent=`${pending.length} factura${pending.length!==1?'s':''} sin cobrar`;
+  // Footer resumen
+  document.getElementById('cred-kpi-total').textContent='$'+fmtC(ttotal);
+  document.getElementById('cred-kpi-venc').textContent='$'+fmtC(tvenc);
   document.getElementById('cred-kpi-clientes').textContent=uniqueClients;
-  document.getElementById('cred-kpi-venc').textContent=fmtC(tvenc);
-  document.getElementById('cred-kpi-venc-sub').textContent=vencidos.length?`Desde ${fmtD(vencidos.sort((a,b)=>new Date(a.fecha_pago)-new Date(b.fecha_pago))[0].fecha_pago)}`:'Sin vencidos';
-  document.getElementById('cred-kpi-venc-cnt').textContent=vencidos.length;
-  document.getElementById('cred-kpi-soon').textContent=fmtC(tprox);
-  document.getElementById('cred-kpi-soon-sub').textContent=`Próximos 7 días`;
-  document.getElementById('cred-kpi-soon-cnt').textContent=proximos.length;
 
-  // Client cards — group by client
-  const byClient={};
-  for(const r of pending){
-    const k=r.cliente.toUpperCase().trim();
-    if(!byClient[k])byClient[k]={nombre:r.cliente,total:0,facturas:[]};
-    byClient[k].total+=r.monto;
-    byClient[k].facturas.push(r);
+  // SEMANA: lunes a sábado de la semana actual
+  const dow=today.getDay(); // 0=Dom
+  const lunes=new Date(today); lunes.setDate(today.getDate()-(dow===0?6:dow-1));
+  const sabado=new Date(lunes); sabado.setDate(lunes.getDate()+5);
+
+  // Chips por día de la semana con cobros
+  const dayNames=['Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let semanaTotal=0;
+  const chips=[];
+  for(let i=0;i<6;i++){
+    const dia=new Date(lunes); dia.setDate(lunes.getDate()+i);
+    const diaISO=toISO(dia);
+    const items=pending.filter(r=>r.fecha_pago===diaISO);
+    const monto=items.reduce((s,r)=>s+r.monto,0);
+    semanaTotal+=monto;
+    const isPast=dia<today, isToday=diaISO===toISO(today);
+    if(monto>0||isToday){
+      const cls=isPast?'sc-past':isToday?'sc-today':'sc-future';
+      chips.push(`<div class="semana-chip ${cls}"><span class="sc-label">${dayNames[i]} ${dia.getDate()}</span><span class="sc-amt">$${fmtC(monto)}</span></div>`);
+    }
   }
-  // sort: vencido > proximo > futuro > indefinido
-  const clientScore=(c)=>{
-    const hasVenc=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);
-    const hasProx=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);
-    const hasIndef=c.facturas.some(r=>r.indefinida);
-    if(hasVenc)return 0; if(hasProx)return 1; if(!hasIndef)return 2; return 3;
-  };
+  // Días futuros de próximas semanas con saldo
+  const futuroItems=pending.filter(r=>{
+    if(!r.fecha_pago||r.indefinida) return false;
+    const d=parseDate(r.fecha_pago);
+    return d>sabado;
+  });
+  const futuroTotal=futuroItems.reduce((s,r)=>s+r.monto,0);
+  if(futuroTotal>0) chips.push(`<div class="semana-chip sc-future"><span class="sc-label">Próx. semanas</span><span class="sc-amt">$${fmtC(futuroTotal)}</span></div>`);
+  if(pending.some(r=>r.indefinida)){
+    const indef=pending.filter(r=>r.indefinida).reduce((s,r)=>s+r.monto,0);
+    chips.push(`<div class="semana-chip" style="opacity:0.6;"><span class="sc-label">Sin fecha</span><span class="sc-amt">$${fmtC(indef)}</span></div>`);
+  }
 
-  const cg=document.getElementById('client-grid');
-  if(!Object.keys(byClient).length){cg.innerHTML='<div class="empty-state"><div class="emoji">🎉</div>Sin créditos pendientes</div>';return;}
-  cg.innerHTML=Object.values(byClient).sort((a,b)=>clientScore(a)-clientScore(b)).map(c=>{
-    const hasVenc=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);
-    const hasProx=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);
-    const hasIndef=c.facturas.some(r=>r.indefinida);
-    const cls=hasVenc?'vencido':hasProx?'proximo':hasIndef?'indefinido':'futuro';
-    // Next due date
-    const nextDue=c.facturas.filter(r=>r.fecha_pago&&!r.indefinida).sort((a,b)=>new Date(a.fecha_pago)-new Date(b.fecha_pago))[0];
-    const dueTxt=hasIndef&&!nextDue?'Fecha: INDEFINIDA':nextDue?`Próximo: <strong>${fmtD(nextDue.fecha_pago)}</strong>`:'Sin fecha';
-    const statusIcon=hasVenc?'🚨':hasProx?'⏰':hasIndef?'❓':'📅';
-    return`<div class="client-card ${cls}">
-      <div class="client-name">${statusIcon} ${c.facturas[0].cliente}</div>
-      <div class="client-docs">${c.facturas.length} factura${c.facturas.length!==1?'s':''}</div>
-      <div class="client-amount"><span>$</span>${fmtC(c.total)}</div>
-      <div class="client-footer"><div class="client-date">${dueTxt}</div></div>
-    </div>`;
-  }).join('');
+  document.getElementById('cred-semana-total').textContent='$'+fmtC(semanaTotal);
+  document.getElementById('cred-semana-dias').innerHTML=chips.join('');
 
-  // Detail table
+  // Tabla créditos pendientes (compacta, ordenada por fecha_pago)
   const tbody=document.getElementById('cred-table-body');
   const rows=pending.sort((a,b)=>{
     const da=a.indefinida?new Date('2099-12-31'):a.fecha_pago?new Date(a.fecha_pago):new Date('2099-12-31');
     const db=b.indefinida?new Date('2099-12-31'):b.fecha_pago?new Date(b.fecha_pago):new Date('2099-12-31');
     return da-db;
   });
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Sin créditos pendientes</td></tr>`;return;}
-  tbody.innerHTML=rows.map(r=>{
-    const dp=r.fecha_pago?parseDate(r.fecha_pago):null;
-    const diff=dp?diffDays(today,dp):null;
-    let statusTag,diasTxt;
-    if(r.indefinida){statusTag=`<span class="tag tag-indef">INDEFINIDA</span>`;diasTxt='—';}
-    else if(!dp){statusTag=`<span class="tag tag-indef">SIN FECHA</span>`;diasTxt='—';}
-    else if(dp<today){const d=Math.abs(diff);statusTag=`<span class="tag tag-past">VENCIDO</span>`;diasTxt=`<span style="color:var(--red);font-weight:700;">-${d} día${d!==1?'s':''}</span>`;}
-    else if(dp<=soon){statusTag=`<span class="tag tag-soon">PRÓXIMO</span>`;diasTxt=`<span style="color:var(--orange);font-weight:700;">${diff} día${diff!==1?'s':''}</span>`;}
-    else{statusTag=`<span class="tag tag-future">PENDIENTE</span>`;diasTxt=`${diff} días`;}
-    return`<tr>
-      <td>${fmtD(r.fecha_factura)}</td>
-      <td style="font-size:11px;color:var(--muted);">${r.documento}</td>
-      <td style="font-weight:600;">${r.cliente}</td>
-      <td style="font-weight:700;font-variant-numeric:tabular-nums;">$${fmtC(r.monto)}</td>
-      <td>${r.indefinida?'<span style="color:var(--muted)">INDEFINIDA</span>':fmtD(r.fecha_pago)}</td>
-      <td>${diasTxt}</td>
-      <td>${statusTag}</td>
-    </tr>`;
-  }).join('');
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin créditos pendientes</td></tr>`;}
+  else{
+    tbody.innerHTML=rows.map(r=>{
+      const dp=r.fecha_pago?parseDate(r.fecha_pago):null;
+      const diff=dp?diffDays(today,dp):null;
+      let stag,fechaTxt;
+      if(r.indefinida){stag=`<span class="tag tag-indef">S/F</span>`;fechaTxt='Indef.';}
+      else if(!dp){stag=`<span class="tag tag-indef">S/F</span>`;fechaTxt='—';}
+      else if(dp<today){stag=`<span class="tag tag-past">VENC.</span>`;fechaTxt=`<span style="color:var(--red);font-size:10px;">-${Math.abs(diff)}d</span>`;}
+      else if(diff<=7){stag=`<span class="tag tag-soon">PRONT.</span>`;fechaTxt=`<span style="color:var(--orange);font-size:10px;">${diff}d</span>`;}
+      else{stag=`<span class="tag tag-future">${fmtD(r.fecha_pago)}</span>`;fechaTxt=`${diff}d`;}
+      return`<tr>
+        <td>${stag} ${fechaTxt}</td>
+        <td style="font-weight:600;font-size:11px;">${r.cliente}</td>
+        <td style="font-weight:700;font-variant-numeric:tabular-nums;">$${fmtC(r.monto)}</td>
+        <td style="font-size:10px;color:var(--muted);">${r.documento||'—'}</td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 // ── LOAD & RENDER ─────────────────────────────────────
