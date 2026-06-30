@@ -454,7 +454,7 @@
       </div>
     </div>
 
-    <!-- DOS COLUMNAS: liquidaciones | créditos de la semana -->
+    <!-- DOS COLUMNAS: liquidaciones | resumen mes -->
     <div class="two-col">
 
       <!-- IZQUIERDA: liquidaciones pendientes -->
@@ -482,62 +482,90 @@
         </div>
       </div>
 
-      <!-- DERECHA: créditos de la semana -->
-      <div class="card" style="padding:0;">
-        <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-          <div class="card-title" style="margin:0;">💳 Créditos pendientes</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <div style="font-size:11px;color:var(--muted);">Esta semana:</div>
-            <div style="font-size:15px;font-weight:800;color:var(--accent)" id="cred-semana-total">$0.00</div>
+      <!-- DERECHA: comisiones + resumen mes -->
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="card">
+          <div class="card-title">💡 Fórmulas de comisión</div>
+          <div class="commission-grid">
+            <div class="commission-item"><div class="commission-dot" style="background:#3b7bff"></div><div><div class="commission-name">XPRESS</div><div class="commission-formula">(Cobro ÷ 1.0257) − $3.90</div></div></div>
+            <div class="commission-item"><div class="commission-dot" style="background:#f5a623"></div><div><div class="commission-name">RAPI</div><div class="commission-formula">(Cobro ÷ 1.01) − $3.50</div></div></div>
+            <div class="commission-item"><div class="commission-dot" style="background:#22c55e"></div><div><div class="commission-name">FORZA</div><div class="commission-formula">(Cobro ÷ 1.0300465) − $3.20</div></div></div>
+            <div class="commission-item"><div class="commission-dot" style="background:#a855f7"></div><div><div class="commission-name">FOURBOX</div><div class="commission-formula">(Cobro ÷ 1.010093) − $3.35</div></div></div>
           </div>
         </div>
-        <!-- Chips de días de la semana con montos -->
-        <div id="cred-semana-dias" style="display:flex;gap:6px;padding:0 16px 12px;flex-wrap:wrap;"></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Pago</th><th>Cliente</th><th>Monto</th><th>Estado</th></tr></thead>
-            <tbody id="cred-table-body"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin datos</td></tr></tbody>
-          </table>
-        </div>
-        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;">
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">💳 Total cartera</div>
-            <div style="font-size:16px;font-weight:800;" id="cred-kpi-total">$0.00</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">🚨 Vencido</div>
-            <div style="font-size:16px;font-weight:800;color:var(--red)" id="cred-kpi-venc">$0.00</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;">🏢 Clientes</div>
-            <div style="font-size:16px;font-weight:800;" id="cred-kpi-clientes">0</div>
-          </div>
+        <div class="card">
+          <div class="card-title">📆 Resumen del mes en curso</div>
+          <div class="month-grid" id="month-grid" style="grid-template-columns:repeat(2,1fr);"></div>
         </div>
       </div>
 
     </div><!-- /two-col -->
 
-    <!-- Comisiones (colapsado al fondo, referencia) -->
-    <div class="two-col">
-      <div class="card">
-        <div class="card-title">💡 Fórmulas de comisión</div>
-        <div class="commission-grid">
-          <div class="commission-item"><div class="commission-dot" style="background:#3b7bff"></div><div><div class="commission-name">XPRESS</div><div class="commission-formula">(Cobro ÷ 1.0257) − $3.90</div></div></div>
-          <div class="commission-item"><div class="commission-dot" style="background:#f5a623"></div><div><div class="commission-name">RAPI</div><div class="commission-formula">(Cobro ÷ 1.01) − $3.50</div></div></div>
-          <div class="commission-item"><div class="commission-dot" style="background:#22c55e"></div><div><div class="commission-name">FORZA</div><div class="commission-formula">(Cobro ÷ 1.0300465) − $3.20</div></div></div>
-          <div class="commission-item"><div class="commission-dot" style="background:#a855f7"></div><div><div class="commission-name">FOURBOX</div><div class="commission-formula">(Cobro ÷ 1.010093) − $3.35</div></div></div>
-        </div>
+  </div><!-- /tab-liq -->
+
+  <!-- ═══════════════ TAB 2: CRÉDITOS PENDIENTES ═══════════════ -->
+  <div class="tab-content" id="tab-cred">
+
+    <!-- Alertas -->
+    <div class="alert-bar red" id="cred-vencido-alert" style="display:none;">
+      <span style="font-size:18px;">🚨</span>
+      <div><strong id="cred-vencido-count">0</strong> crédito(s) vencido(s) sin cobrar · <strong id="cred-vencido-amt">$0.00</strong></div>
+    </div>
+
+    <!-- KPIs resumen cartera -->
+    <div class="section-label">Resumen de cartera</div>
+    <div class="kpi-grid">
+      <div class="kpi-card kc-today">
+        <div class="kpi-day-label">💳 TOTAL POR COBRAR</div>
+        <div class="kpi-date" id="cred-kpi-total-sub">—</div>
+        <div class="kpi-amount"><span class="kpi-currency">$</span><span id="cred-kpi-total">0.00</span></div>
+        <div class="kpi-txn-count">🏢 <span id="cred-kpi-clientes">0</span> clientes con saldo</div>
       </div>
-      <div class="card">
-        <div class="card-title">📆 Resumen del mes en curso</div>
-        <div class="month-grid" id="month-grid" style="grid-template-columns:repeat(2,1fr);"></div>
+      <div class="kpi-card kc-tom" style="border-color:var(--red);">
+        <div class="kpi-day-label" style="color:var(--red);">🚨 VENCIDO</div>
+        <div class="kpi-date">Fecha de pago pasada</div>
+        <div class="kpi-amount" style="color:var(--red);"><span class="kpi-currency">$</span><span id="cred-kpi-venc">0.00</span></div>
+        <div class="kpi-txn-count">📋 <span id="cred-kpi-venc-cnt">0</span> facturas</div>
+      </div>
+      <div class="kpi-card kc-next" style="border-color:var(--orange);">
+        <div class="kpi-day-label" style="color:var(--orange);">📅 ESTA SEMANA</div>
+        <div class="kpi-date" id="cred-semana-rango">—</div>
+        <div class="kpi-amount" style="color:var(--orange);"><span class="kpi-currency">$</span><span id="cred-semana-total">0.00</span></div>
+        <div class="kpi-txn-count">📋 Lun–Sáb en curso</div>
       </div>
     </div>
 
-  </div><!-- /tab-liq -->
+    <!-- Chips de días de la semana -->
+    <div class="section-label">Cobros por día esta semana</div>
+    <div id="cred-semana-dias" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;"></div>
 
-  <!-- TAB 2 vacío (créditos ahora viven en tab-liq, pero mantenemos la pestaña por si se necesita expandir) -->
-  <div class="tab-content" id="tab-cred" style="display:none;"></div>
+    <!-- Tabla créditos pendientes + cards por cliente -->
+    <div class="two-col">
+
+      <!-- IZQUIERDA: tabla detalle -->
+      <div class="card" style="padding:0;">
+        <div style="padding:14px 16px 10px;">
+          <div class="card-title" style="margin:0;">📋 Detalle de créditos pendientes</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha pago</th><th>Cliente</th><th>Documento</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody id="cred-table-body"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DERECHA: cards por cliente -->
+      <div>
+        <div class="card-title" style="margin-bottom:12px;">🏢 Por cliente</div>
+        <div class="client-grid" id="client-grid" style="grid-template-columns:1fr;">
+          <div class="empty-state"><div class="emoji">🏢</div>Sin créditos pendientes</div>
+        </div>
+      </div>
+
+    </div><!-- /two-col créditos -->
+
+  </div><!-- /tab-cred -->
 
 
 </div><!-- /main -->
@@ -847,29 +875,36 @@ function renderLiq(cobros) {
 // ── RENDER CRÉDITOS ───────────────────────────────────
 function renderCred(creditos) {
   const today=stripTime(new Date());
+  const soon=new Date(today); soon.setDate(soon.getDate()+7);
 
-  // Solo no abonados
   const pending=creditos.filter(r=>!r.abonada);
   const vencidos=pending.filter(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);
+  const proximos=pending.filter(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);
   const ttotal=pending.reduce((s,r)=>s+r.monto,0);
   const tvenc=vencidos.reduce((s,r)=>s+r.monto,0);
   const uniqueClients=new Set(pending.map(r=>r.cliente.toUpperCase().trim())).size;
 
-  // Badge en pestaña
+  // Badge pestaña
   const badge=document.getElementById('cred-badge');
   if(vencidos.length){badge.style.display='inline';badge.textContent=vencidos.length;}else{badge.style.display='none';}
 
-  // Footer resumen
-  document.getElementById('cred-kpi-total').textContent='$'+fmtC(ttotal);
-  document.getElementById('cred-kpi-venc').textContent='$'+fmtC(tvenc);
+  // Alerta vencidos
+  const va=document.getElementById('cred-vencido-alert');
+  if(vencidos.length){va.style.display='flex';document.getElementById('cred-vencido-count').textContent=vencidos.length;document.getElementById('cred-vencido-amt').textContent='$'+fmtC(tvenc);}else{va.style.display='none';}
+
+  // KPIs
+  document.getElementById('cred-kpi-total').textContent=fmtC(ttotal);
+  document.getElementById('cred-kpi-total-sub').textContent=`${pending.length} factura${pending.length!==1?'s':''} sin cobrar`;
   document.getElementById('cred-kpi-clientes').textContent=uniqueClients;
+  document.getElementById('cred-kpi-venc').textContent=fmtC(tvenc);
+  document.getElementById('cred-kpi-venc-cnt').textContent=`${vencidos.length} factura${vencidos.length!==1?'s':''}`;
 
   // SEMANA: lunes a sábado de la semana actual
-  const dow=today.getDay(); // 0=Dom
+  const dow=today.getDay();
   const lunes=new Date(today); lunes.setDate(today.getDate()-(dow===0?6:dow-1));
   const sabado=new Date(lunes); sabado.setDate(lunes.getDate()+5);
+  document.getElementById('cred-semana-rango').textContent=`${lunes.getDate()} ${MONS_S[lunes.getMonth()]} – ${sabado.getDate()} ${MONS_S[sabado.getMonth()]}`;
 
-  // Chips por día de la semana con cobros
   const dayNames=['Lun','Mar','Mié','Jue','Vie','Sáb'];
   let semanaTotal=0;
   const chips=[];
@@ -880,53 +915,63 @@ function renderCred(creditos) {
     const monto=items.reduce((s,r)=>s+r.monto,0);
     semanaTotal+=monto;
     const isPast=dia<today, isToday=diaISO===toISO(today);
-    if(monto>0||isToday){
-      const cls=isPast?'sc-past':isToday?'sc-today':'sc-future';
-      chips.push(`<div class="semana-chip ${cls}"><span class="sc-label">${dayNames[i]} ${dia.getDate()}</span><span class="sc-amt">$${fmtC(monto)}</span></div>`);
-    }
+    const cls=isPast?'sc-past':isToday?'sc-today':'sc-future';
+    chips.push(`<div class="semana-chip ${cls}"><span class="sc-label">${dayNames[i]} ${dia.getDate()}</span><span class="sc-amt">$${fmtC(monto)}</span></div>`);
   }
-  // Días futuros de próximas semanas con saldo
-  const futuroItems=pending.filter(r=>{
-    if(!r.fecha_pago||r.indefinida) return false;
-    const d=parseDate(r.fecha_pago);
-    return d>sabado;
-  });
+  // Próximas semanas y sin fecha
+  const futuroItems=pending.filter(r=>r.fecha_pago&&!r.indefinida&&parseDate(r.fecha_pago)>sabado);
   const futuroTotal=futuroItems.reduce((s,r)=>s+r.monto,0);
   if(futuroTotal>0) chips.push(`<div class="semana-chip sc-future"><span class="sc-label">Próx. semanas</span><span class="sc-amt">$${fmtC(futuroTotal)}</span></div>`);
   if(pending.some(r=>r.indefinida)){
     const indef=pending.filter(r=>r.indefinida).reduce((s,r)=>s+r.monto,0);
     chips.push(`<div class="semana-chip" style="opacity:0.6;"><span class="sc-label">Sin fecha</span><span class="sc-amt">$${fmtC(indef)}</span></div>`);
   }
-
-  document.getElementById('cred-semana-total').textContent='$'+fmtC(semanaTotal);
+  document.getElementById('cred-semana-total').textContent=fmtC(semanaTotal);
   document.getElementById('cred-semana-dias').innerHTML=chips.join('');
 
-  // Tabla créditos pendientes (compacta, ordenada por fecha_pago)
+  // Cards por cliente
+  const byClient={};
+  for(const r of pending){const k=r.cliente.toUpperCase().trim();if(!byClient[k])byClient[k]={nombre:r.cliente,total:0,facturas:[]};byClient[k].total+=r.monto;byClient[k].facturas.push(r);}
+  const clientScore=c=>{const hV=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);const hP=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);const hI=c.facturas.some(r=>r.indefinida);if(hV)return 0;if(hP)return 1;if(!hI)return 2;return 3;};
+  const cg=document.getElementById('client-grid');
+  if(!Object.keys(byClient).length){cg.innerHTML='<div class="empty-state"><div class="emoji">🎉</div>Sin créditos pendientes</div>';}
+  else{cg.innerHTML=Object.values(byClient).sort((a,b)=>clientScore(a)-clientScore(b)).map(c=>{
+    const hV=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)<today);
+    const hP=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);
+    const hI=c.facturas.some(r=>r.indefinida);
+    const cls=hV?'vencido':hP?'proximo':hI?'indefinido':'futuro';
+    const nextDue=c.facturas.filter(r=>r.fecha_pago&&!r.indefinida).sort((a,b)=>new Date(a.fecha_pago)-new Date(b.fecha_pago))[0];
+    const dueTxt=hI&&!nextDue?'Fecha: INDEFINIDA':nextDue?`Próximo: <strong>${fmtD(nextDue.fecha_pago)}</strong>`:'Sin fecha';
+    const icon=hV?'🚨':hP?'⏰':hI?'❓':'📅';
+    return`<div class="client-card ${cls}"><div class="client-name">${icon} ${c.facturas[0].cliente}</div><div class="client-docs">${c.facturas.length} factura${c.facturas.length!==1?'s':''}</div><div class="client-amount"><span>$</span>${fmtC(c.total)}</div><div class="client-footer"><div class="client-date">${dueTxt}</div></div></div>`;
+  }).join('');}
+
+  // Tabla detalle (5 columnas)
   const tbody=document.getElementById('cred-table-body');
   const rows=pending.sort((a,b)=>{
     const da=a.indefinida?new Date('2099-12-31'):a.fecha_pago?new Date(a.fecha_pago):new Date('2099-12-31');
     const db=b.indefinida?new Date('2099-12-31'):b.fecha_pago?new Date(b.fecha_pago):new Date('2099-12-31');
     return da-db;
   });
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin créditos pendientes</td></tr>`;}
-  else{
-    tbody.innerHTML=rows.map(r=>{
-      const dp=r.fecha_pago?parseDate(r.fecha_pago):null;
-      const diff=dp?diffDays(today,dp):null;
-      let stag,fechaTxt;
-      if(r.indefinida){stag=`<span class="tag tag-indef">S/F</span>`;fechaTxt='Indef.';}
-      else if(!dp){stag=`<span class="tag tag-indef">S/F</span>`;fechaTxt='—';}
-      else if(dp<today){stag=`<span class="tag tag-past">VENC.</span>`;fechaTxt=`<span style="color:var(--red);font-size:10px;">-${Math.abs(diff)}d</span>`;}
-      else if(diff<=7){stag=`<span class="tag tag-soon">PRONT.</span>`;fechaTxt=`<span style="color:var(--orange);font-size:10px;">${diff}d</span>`;}
-      else{stag=`<span class="tag tag-future">${fmtD(r.fecha_pago)}</span>`;fechaTxt=`${diff}d`;}
-      return`<tr>
-        <td>${stag} ${fechaTxt}</td>
-        <td style="font-weight:600;font-size:11px;">${r.cliente}</td>
-        <td style="font-weight:700;font-variant-numeric:tabular-nums;">$${fmtC(r.monto)}</td>
-        <td style="font-size:10px;color:var(--muted);">${r.documento||'—'}</td>
-      </tr>`;
-    }).join('');
-  }
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Sin créditos pendientes</td></tr>`;}
+  else{tbody.innerHTML=rows.map(r=>{
+    const dp=r.fecha_pago?parseDate(r.fecha_pago):null;
+    const diff=dp?diffDays(today,dp):null;
+    let stag;
+    if(r.indefinida)stag=`<span class="tag tag-indef">SIN FECHA</span>`;
+    else if(!dp)stag=`<span class="tag tag-indef">SIN FECHA</span>`;
+    else if(dp<today)stag=`<span class="tag tag-past">VENCIDO</span>`;
+    else if(diff<=7)stag=`<span class="tag tag-soon">PRÓXIMO</span>`;
+    else stag=`<span class="tag tag-future">PENDIENTE</span>`;
+    const diasTxt=dp&&!r.indefinida?(dp<today?`<span style="color:var(--red)">-${Math.abs(diff)}d</span>`:`${diff}d`):'—';
+    return`<tr>
+      <td>${r.indefinida?'<span style="color:var(--muted)">Indefinida</span>':fmtD(r.fecha_pago)} ${diasTxt}</td>
+      <td style="font-weight:600;">${r.cliente}</td>
+      <td style="font-size:11px;color:var(--muted);">${r.documento||'—'}</td>
+      <td style="font-weight:700;font-variant-numeric:tabular-nums;">$${fmtC(r.monto)}</td>
+      <td>${stag}</td>
+    </tr>`;
+  }).join('');}
 }
 
 // ── LOAD & RENDER ─────────────────────────────────────
