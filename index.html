@@ -576,6 +576,30 @@
     <!-- 10 REPORTES -->
     <div class="rep-grid">
 
+      <!-- R8 PRIMERO: Flujo de caja proyectado — ancho completo, gráfico grande -->
+      <div class="rep-card rep-card-full">
+        <div class="rep-card-header">
+          <div>
+            <div class="rep-card-title">💵 Flujo de caja proyectado</div>
+            <div class="rep-card-sub" id="r8-sub">Cobros pendientes por fecha (liquidaciones + CxC)</div>
+          </div>
+          <button class="rep-export-btn" onclick="exportPDF('rep-r8','flujo-caja')">⬇ PDF</button>
+        </div>
+        <div id="rep-r8"></div>
+      </div>
+
+      <!-- R10 SEGUNDO: Consolidado mensual — ancho completo -->
+      <div class="rep-card rep-card-full">
+        <div class="rep-card-header">
+          <div>
+            <div class="rep-card-title">📅 Consolidado mensual</div>
+            <div class="rep-card-sub" id="r10-sub">Resumen completo del mes</div>
+          </div>
+          <button class="rep-export-btn" onclick="exportPDF('rep-r10','consolidado-mes')">⬇ PDF</button>
+        </div>
+        <div id="rep-r10"></div>
+      </div>
+
       <!-- R1: Resumen ejecutivo -->
       <div class="rep-card rep-card-full">
         <div class="rep-card-header">
@@ -605,7 +629,7 @@
         <div class="rep-card-header">
           <div>
             <div class="rep-card-title">💰 Pagos más importantes</div>
-            <div class="rep-card-sub">Top 10 por monto</div>
+            <div class="rep-card-sub" id="r2-sub">Top 10 por monto</div>
           </div>
           <button class="rep-export-btn" onclick="exportPDF('rep-r2','pagos-importantes')">⬇ PDF</button>
         </div>
@@ -617,7 +641,7 @@
         <div class="rep-card-header">
           <div>
             <div class="rep-card-title">📈 % Cumplimiento de pago</div>
-            <div class="rep-card-sub">Liquidado vs pendiente</div>
+            <div class="rep-card-sub" id="r3-sub">Liquidado vs pendiente</div>
           </div>
           <button class="rep-export-btn" onclick="exportPDF('rep-r3','cumplimiento')">⬇ PDF</button>
         </div>
@@ -628,8 +652,8 @@
       <div class="rep-card">
         <div class="rep-card-header">
           <div>
-            <div class="rep-card-title">✅ CxC cobrada en el período</div>
-            <div class="rep-card-sub">Facturas abonadas</div>
+            <div class="rep-card-title">✅ CxC cobrada</div>
+            <div class="rep-card-sub" id="r4-sub">Facturas abonadas</div>
           </div>
           <button class="rep-export-btn" onclick="exportPDF('rep-r4','cxc-cobrada')">⬇ PDF</button>
         </div>
@@ -641,7 +665,7 @@
         <div class="rep-card-header">
           <div>
             <div class="rep-card-title">🏆 Ranking de clientes</div>
-            <div class="rep-card-sub">Por volumen de compra</div>
+            <div class="rep-card-sub" id="r5-sub">Por volumen acumulado</div>
           </div>
           <button class="rep-export-btn" onclick="exportPDF('rep-r5','ranking-clientes')">⬇ PDF</button>
         </div>
@@ -653,7 +677,7 @@
         <div class="rep-card-header">
           <div>
             <div class="rep-card-title">📦 Análisis por paquetera</div>
-            <div class="rep-card-sub">Cobros, comisiones y eficiencia</div>
+            <div class="rep-card-sub" id="r6-sub">Cobros, comisiones y eficiencia</div>
           </div>
           <button class="rep-export-btn" onclick="exportPDF('rep-r6','paqueteras')">⬇ PDF</button>
         </div>
@@ -665,23 +689,11 @@
         <div class="rep-card-header">
           <div>
             <div class="rep-card-title">🚨 Vencimientos críticos</div>
-            <div class="rep-card-sub">Vencidos y próximos 7 días</div>
+            <div class="rep-card-sub">Vencidos y próximos 7 días · Siempre actualizado</div>
           </div>
           <button class="rep-export-btn" onclick="exportPDF('rep-r7','vencimientos')">⬇ PDF</button>
         </div>
         <div id="rep-r7"></div>
-      </div>
-
-      <!-- R8: Flujo de caja proyectado -->
-      <div class="rep-card">
-        <div class="rep-card-header">
-          <div>
-            <div class="rep-card-title">💵 Flujo de caja proyectado</div>
-            <div class="rep-card-sub">Entradas esperadas por día</div>
-          </div>
-          <button class="rep-export-btn" onclick="exportPDF('rep-r8','flujo-caja')">⬇ PDF</button>
-        </div>
-        <div id="rep-r8"></div>
       </div>
 
       <!-- R9: Reporte diario de cierre -->
@@ -689,23 +701,11 @@
         <div class="rep-card-header">
           <div>
             <div class="rep-card-title">🌙 Cierre del día</div>
-            <div class="rep-card-sub">Snapshot al cierre</div>
+            <div class="rep-card-sub" id="r9-sub">Snapshot al cierre</div>
           </div>
           <button class="rep-export-btn" onclick="exportPDF('rep-r9','cierre-dia')">⬇ PDF</button>
         </div>
         <div id="rep-r9"></div>
-      </div>
-
-      <!-- R10: Consolidado mensual -->
-      <div class="rep-card rep-card-full">
-        <div class="rep-card-header">
-          <div>
-            <div class="rep-card-title">📅 Consolidado mensual</div>
-            <div class="rep-card-sub">Resumen completo del mes</div>
-          </div>
-          <button class="rep-export-btn" onclick="exportPDF('rep-r10','consolidado-mes')">⬇ PDF</button>
-        </div>
-        <div id="rep-r10"></div>
       </div>
 
     </div><!-- /rep-grid -->
@@ -809,11 +809,15 @@ function parseExcel(data) {
 
       for(let i=hdr+1;i<raw.length;i++){
         const r=raw[i];
-        if(!r||!r[cF]) continue;
+        if(!r) continue;
         const credAmt=cCred>=0?cleanNum(r[cCred]):null;
         if(!credAmt||isNaN(credAmt)||credAmt<=0) continue;
-        // Skip totals row
-        if(r[cF]&&String(r[cF]).toUpperCase().includes('TOTAL')) continue;
+        // Filtrar fila de totales: busca 'TOTAL' en cualquier columna de texto
+        const anyTotal = r.some(cell => cell && String(cell).toUpperCase().includes('TOTAL'));
+        if(anyTotal) continue;
+        // Filtrar si no hay fecha Y no hay cliente (fila vacía/total)
+        const clienteVal = cOrden>=0?r[cOrden]:null;
+        if(!r[cF] && !clienteVal) continue;
 
         const fechaRaw=r[cF];
         const fecha=fechaRaw instanceof Date?fechaRaw:new Date(fechaRaw);
@@ -875,7 +879,10 @@ function parseExcel(data) {
       if(!contra) continue;
       const mr=cMR>=0?cleanNum(r[cMR]):null;
       const liq=cL>=0?r[cL]:null;
-      const liquidado=(mr&&!isNaN(mr)&&mr>0)||(liq&&String(liq).trim().toLowerCase()==='sí');
+      const liqRaw=liq?String(liq).trim():'';
+      // Acepta: "Sí","Si","SÍ","SI","S","Yes","YES","1","true" o monto_real > 0
+      const liqSi=/^(s[íi]?|yes|y|1|true)$/i.test(liqRaw);
+      const liquidado=(mr&&!isNaN(mr)&&mr>0)||liqSi;
       const monto=Math.max(0,calcMonto(paq,contra));
       const fs=stripTime(fecha);
       const dep=addBizDays(fs,2);
@@ -1257,9 +1264,25 @@ function renderReports() {
   const { from, to } = getPeriodRange();
   const today = stripTime(new Date());
   const periodNames = { today:'Hoy', week:'Esta semana', month:'Este mes', custom:'Personalizado' };
-  document.getElementById('rep-period-label').textContent = `${periodNames[REP.period]} · ${fmtD(from)}${from.getTime()!==to.getTime()?' – '+fmtD(to):''}`;
+  const periodLabel = `${periodNames[REP.period]} · ${fmtD(from)}${from.getTime()!==to.getTime()?' – '+fmtD(to):''}`;
+  document.getElementById('rep-period-label').textContent = periodLabel;
 
-  const liqPeriod = REP.cobros.filter(r => inRange(r.deposito_esperado, from, to));
+  // Subtítulos con timeframe en cada indicador
+  const setSub = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt; };
+  setSub('r1-sub', periodLabel);
+  setSub('r2-sub', `Top 10 por monto · ${periodLabel}`);
+  setSub('r3-sub', `Liquidado vs pendiente · ${periodLabel}`);
+  setSub('r4-sub', `Facturas abonadas · ${periodLabel}`);
+  setSub('r5-sub', `Todo el historial cargado · ${new Date().getFullYear()}`);
+  setSub('r6-sub', `Todo el historial cargado · ${new Date().getFullYear()}`);
+  setSub('r8-sub', `Cobros pendientes por fecha (liquidaciones + CxC) · Todo el historial pendiente`);
+  setSub('r9-sub', `Hoy · ${fmtD(today)}`);
+  setSub('r10-sub', `${MONS_F[today.getMonth()]} ${today.getFullYear()} · Mes en curso`);
+
+  // Liquidaciones del período: filtramos por fecha_venta (cuándo se hizo la venta)
+  // para que "Este mes = junio" muestre todas las ventas de junio aunque el depósito
+  // de la paquetera caiga en julio. Para CxC se usa fecha_pago como antes.
+  const liqPeriod = REP.cobros.filter(r => inRange(r.fecha_venta, from, to));
   const liqLiq = liqPeriod.filter(r=>r.liquidado);
   const liqPend = liqPeriod.filter(r=>!r.liquidado);
   const credPeriod = REP.creditos.filter(r => inRange(r.fecha_pago, from, to));
@@ -1279,12 +1302,12 @@ function renderReports() {
     {label:'CxC cartera pendiente',val:'$'+fmtC(tCP),sub:credPendTot.length+' facturas',color:'var(--purple)'},
   ].map(k=>`<div class="rep-kpi"><div class="rep-kpi-label">${k.label}</div><div class="rep-kpi-val" style="color:${k.color}">${k.val}</div><div class="rep-kpi-sub">${k.sub}</div></div>`).join('');
   const mkTable=(rows,cols,data)=>`<table class="rep-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${data.length?data.join(''):'<tr><td colspan="'+cols.length+'" class="rep-empty">Sin datos</td></tr>'}</tbody></table>`;
-  document.getElementById('r1-liq-table').innerHTML=mkTable([],['Depósito','Cliente','Paq.','Monto'],liqPeriod.sort((a,b)=>new Date(a.deposito_esperado)-new Date(b.deposito_esperado)).slice(0,8).map(r=>`<tr><td>${fmtD(r.deposito_esperado)}</td><td>${r.cliente}</td><td>${r.paquetera}</td><td class="num ${r.liquidado?'pos':''}">$${fmtC(r.monto_liquidar)}</td></tr>`));
+  document.getElementById('r1-liq-table').innerHTML=mkTable([],['Fecha venta','Depósito esp.','Cliente','Paq.','Monto','Estado'],liqPeriod.sort((a,b)=>new Date(a.fecha_venta)-new Date(b.fecha_venta)).slice(0,10).map(r=>`<tr><td>${fmtD(r.fecha_venta)}</td><td style="color:var(--muted)">${fmtD(r.deposito_esperado)}</td><td>${r.cliente}</td><td>${r.paquetera}</td><td class="num ${r.liquidado?'pos':''}">$${fmtC(r.monto_liquidar)}</td><td>${r.liquidado?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--gold)">Pend.</span>'}</td></tr>`));
   document.getElementById('r1-cred-table').innerHTML=mkTable([],['Fecha','Cliente','Monto','Estado'],credPeriod.sort((a,b)=>new Date(a.fecha_pago)-new Date(b.fecha_pago)).slice(0,8).map(r=>`<tr><td>${fmtD(r.fecha_pago)}</td><td>${r.cliente}</td><td class="num ${r.abonada?'pos':''}">$${fmtC(r.monto)}</td><td>${r.abonada?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">Pend.</span>'}</td></tr>`));
 
   // R2: Pagos más importantes
   const top10=[...liqPeriod,...credPeriod.map(r=>({...r,monto_liquidar:r.monto}))].sort((a,b)=>parseFloat(b.monto_liquidar||0)-parseFloat(a.monto_liquidar||0)).slice(0,10);
-  document.getElementById('rep-r2').innerHTML=top10.length?mkTable([],['#','Fecha','Cliente','Tipo','Monto','Estado'],top10.map((r,i)=>`<tr><td style="color:var(--muted);font-weight:700">${i+1}</td><td>${fmtD(r.deposito_esperado||r.fecha_pago)}</td><td style="font-weight:600">${r.cliente}</td><td>${r.paquetera?paqBadge(r.paquetera):'<span style="color:var(--accent);font-size:11px">CxC</span>'}</td><td class="num">$${fmtC(r.monto_liquidar||r.monto)}</td><td>${(r.liquidado||r.abonada)?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">Pend.</span>'}</td></tr>`)):'<div class="rep-empty">Sin pagos en este período</div>';
+  document.getElementById('rep-r2').innerHTML=top10.length?mkTable([],['#','Fecha','Cliente','Tipo','Monto','Estado'],top10.map((r,i)=>`<tr><td style="color:var(--muted);font-weight:700">${i+1}</td><td>${fmtD(r.fecha_venta||r.fecha_pago)}</td><td style="font-weight:600">${r.cliente}</td><td>${r.paquetera?paqBadge(r.paquetera):'<span style="color:var(--accent);font-size:11px">CxC</span>'}</td><td class="num">$${fmtC(r.monto_liquidar||r.monto)}</td><td>${(r.liquidado||r.abonada)?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">Pend.</span>'}</td></tr>`)):'<div class="rep-empty">Sin pagos en este período</div>';
 
   // R3: % Cumplimiento
   const pctLiq=tLL+tLP>0?Math.round(tLL/(tLL+tLP)*100):0;
@@ -1316,11 +1339,41 @@ function renderReports() {
   const allCrit=[...vL.map(r=>({...r,monto:parseFloat(r.monto_liquidar||0),tipo:'Liq.',fecha:r.deposito_esperado,urg:'VENCIDO'})),...vC.map(r=>({...r,tipo:'CxC',fecha:r.fecha_pago,urg:'VENCIDO'})),...pL.map(r=>({...r,monto:parseFloat(r.monto_liquidar||0),tipo:'Liq.',fecha:r.deposito_esperado,urg:'PRÓXIMO'})),...pC.map(r=>({...r,tipo:'CxC',fecha:r.fecha_pago,urg:'PRÓXIMO'}))].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
   document.getElementById('rep-r7').innerHTML=allCrit.length?`<div style="display:flex;gap:12px;margin-bottom:14px"><div class="rep-kpi" style="flex:1;border-color:rgba(239,68,68,0.4)"><div class="rep-kpi-label" style="color:var(--red)">Vencido total</div><div class="rep-kpi-val" style="color:var(--red)">$${fmtC(tv)}</div></div><div class="rep-kpi" style="flex:1;border-color:rgba(251,146,60,0.4)"><div class="rep-kpi-label" style="color:var(--orange)">Próx. 7 días</div><div class="rep-kpi-val" style="color:var(--orange)">$${fmtC(tp)}</div></div></div>`+mkTable([],['Fecha','Cliente','Tipo','Monto','Estado'],allCrit.map(r=>`<tr><td>${fmtD(r.fecha)}</td><td style="font-weight:600">${r.cliente}</td><td style="font-size:11px">${r.tipo}</td><td class="num">$${fmtC(r.monto)}</td><td><span class="tag ${r.urg==='VENCIDO'?'tag-past':'tag-soon'}">${r.urg}</span></td></tr>`)):'<div class="rep-empty" style="color:var(--green)">✅ Sin vencimientos críticos</div>';
 
-  // R8: Flujo de caja proyectado
+  // R8: Flujo de caja proyectado — gráfico grande ancho completo
   const fd={};REP.cobros.filter(r=>!r.liquidado).forEach(r=>{if(!r.deposito_esperado)return;if(!fd[r.deposito_esperado])fd[r.deposito_esperado]={liq:0,cred:0};fd[r.deposito_esperado].liq+=parseFloat(r.monto_liquidar||0);});
   REP.creditos.filter(r=>!r.abonada&&!r.indefinida&&r.fecha_pago).forEach(r=>{if(!fd[r.fecha_pago])fd[r.fecha_pago]={liq:0,cred:0};fd[r.fecha_pago].cred+=r.monto;});
   const fs=Object.keys(fd).sort();const mxF=Math.max(...fs.map(k=>fd[k].liq+fd[k].cred),1);
-  document.getElementById('rep-r8').innerHTML=fs.length?fs.map(k=>{const d=fd[k],tot=d.liq+d.cred;const isPast=parseDate(k)<today,isTod=k===toISO(today);const col=isPast?'var(--red)':isTod?'var(--accent)':'var(--green)';return`<div class="rep-bar-row"><div class="rep-bar-label" style="color:${isPast?'var(--muted)':'var(--text)'}">${fmtD(k)}</div><div class="rep-bar-track"><div class="rep-bar-fill" style="width:${(tot/mxF*100).toFixed(0)}%;background:${col};opacity:${isPast?.4:1}"></div></div><div class="rep-bar-val" style="color:${col}">$${fmtC(tot)}</div></div>`;}).join(''):'<div class="rep-empty">Sin cobros proyectados</div>';
+  document.getElementById('rep-r8').innerHTML=fs.length
+    ? `<div style="margin-bottom:10px;display:flex;align-items:center;gap:18px;font-size:11px;">
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block"></span>Liquidaciones paquetera</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--purple);display:inline-block"></span>Créditos (CxC)</span>
+        <span style="margin-left:auto;color:var(--muted)">Total proyectado: <strong style="color:var(--text)">$${fmtC(fs.reduce((s,k)=>s+fd[k].liq+fd[k].cred,0))}</strong></span>
+      </div>
+      ${fs.map(k=>{
+        const d=fd[k],tot=d.liq+d.cred;
+        const isPast=parseDate(k)<today,isTod=k===toISO(today);
+        const pctLiq=(d.liq/mxF*100).toFixed(1);const pctCred=(d.cred/mxF*100).toFixed(1);
+        const alpha=isPast?'0.35':'1';
+        const dayLabel=isPast?`<span style="color:var(--red);font-size:9px">VENC.</span>`:isTod?`<span style="color:var(--accent);font-size:9px">HOY</span>`:'';
+        return`<div class="rep-bar-row" style="margin-bottom:10px;align-items:center;">
+          <div style="width:110px;flex-shrink:0;font-size:11px;line-height:1.3;">
+            <div style="font-weight:600;color:${isPast?'var(--muted)':'var(--text)'}">${fmtD(k)}</div>
+            <div>${dayLabel}</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+            ${d.liq>0?`<div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:${pctLiq}%;height:14px;background:var(--accent);border-radius:3px;opacity:${alpha};min-width:3px;transition:width 0.5s;"></div>
+              <span style="font-size:10px;color:var(--muted);white-space:nowrap">$${fmtC(d.liq)}</span>
+            </div>`:''}
+            ${d.cred>0?`<div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:${pctCred}%;height:14px;background:var(--purple);border-radius:3px;opacity:${alpha};min-width:3px;transition:width 0.5s;"></div>
+              <span style="font-size:10px;color:var(--muted);white-space:nowrap">$${fmtC(d.cred)}</span>
+            </div>`:''}
+          </div>
+          <div style="width:80px;text-align:right;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:${isPast?'var(--red)':isTod?'var(--accent)':'var(--text)'}">$${fmtC(tot)}</div>
+        </div>`;
+      }).join('')}`
+    : '<div class="rep-empty">Sin cobros proyectados pendientes</div>';
 
   // R9: Cierre del día
   const tISO=toISO(today);
@@ -1331,7 +1384,7 @@ function renderReports() {
   // R10: Consolidado mensual
   const mI=today.getMonth();const mN=MONS_F[mI];
   const mS=new Date(today.getFullYear(),mI,1);const mE=new Date(today.getFullYear(),mI+1,0);
-  const lM=REP.cobros.filter(r=>inRange(r.deposito_esperado,mS,mE));
+  const lM=REP.cobros.filter(r=>inRange(r.fecha_venta,mS,mE));
   const cM=REP.creditos.filter(r=>inRange(r.fecha_pago,mS,mE));
   const lML=lM.filter(r=>r.liquidado).reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
   const lMP=lM.filter(r=>!r.liquidado).reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
