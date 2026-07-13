@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src https://*.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';">
 <title>Dashboard · Liquidaciones</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
   :root {
     --bg:#0f1117; --surface:#181c27; --surface2:#1e2333; --border:#2a3050;
@@ -562,6 +563,7 @@
           <button class="rep-period-btn active" onclick="setPeriod('week',this)">Esta semana</button>
           <button class="rep-period-btn" onclick="setPeriod('month',this)">Este mes</button>
           <button class="rep-period-btn" onclick="setPeriod('custom',this)">Personalizado</button>
+          <button class="rep-period-btn" onclick="setPeriod('all',this)">Todo</button>
         </div>
       </div>
       <div class="rep-filter-group" id="custom-dates" style="display:none;">
@@ -726,7 +728,9 @@ const sbGet = async (t,q='') => { const r=await fetch(`${SB_URL}/rest/v1/${t}?${
 const sbPost = async (t,b) => { const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:SB_H,body:JSON.stringify(b)}); if(!r.ok){const x=await r.text();throw new Error(`POST ${t}: ${r.status} — ${x}`);}  return r.json(); };
 const sbDel = async (t,m) => { const p=Object.entries(m).map(([k,v])=>`${k}=eq.${v}`).join('&'); const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{method:'DELETE',headers:SB_H}); if(!r.ok) throw new Error(`DEL ${t}: ${r.status}`); };
 
-// ── LOCALE ────────────────────────────────────────────
+// ── SECURITY: sanitizar HTML antes de insertar en el DOM ──
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
 const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const MONS_S=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const MONS_F=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1093,8 +1097,8 @@ function renderCred(creditos) {
     else{statusTag=`<span class="tag tag-future">PENDIENTE</span>`;diasTxt=`${diff} días`;}
     return`<tr>
       <td>${fmtD(r.fecha_factura)}</td>
-      <td style="font-size:11px;color:var(--muted);">${r.documento}</td>
-      <td style="font-weight:600;">${r.cliente}</td>
+      <td style="font-size:11px;color:var(--muted);">${esc(r.documento)}</td>
+      <td style="font-weight:600;">${esc(r.cliente)}</td>
       <td style="font-weight:700;font-variant-numeric:tabular-nums;">$${fmtC(r.monto)}</td>
       <td>${r.indefinida?'<span style="color:var(--muted)">INDEFINIDA</span>':fmtD(r.fecha_pago)}</td>
       <td>${diasTxt}</td>
@@ -1140,7 +1144,7 @@ const refreshHistory = async () => {
     list.innerHTML=uploads.map(u=>{
       const ts=new Date(u.uploaded_at);
       return`<div class="history-item ${u.id===activeUploadId?'active':''}" onclick="selectUpload('${u.id}')">
-        <div><div class="history-item-name">${u.filename}</div><div class="history-item-meta">${u.total_cobros} cobros · $${fmtC(u.total_monto)} · ${ts.toLocaleDateString('es-SV')} ${ts.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})}</div></div>
+        <div><div class="history-item-name">${esc(u.filename)}</div><div class="history-item-meta">${u.total_cobros} cobros · $${fmtC(u.total_monto)} · ${ts.toLocaleDateString('es-SV')} ${ts.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})}</div></div>
         <button class="history-item-del" onclick="deleteUpload(event,'${u.id}')">✕</button>
       </div>`;
     }).join('');
@@ -1178,6 +1182,11 @@ async function processFile(file) {
         toast('No se encontraron datos. Revisa la consola del navegador (F12) para más detalle.','err',7000);
         return;
       }
+      // Aviso si ya hay datos cargados — evita duplicados accidentales
+      if(activeUploadId){
+        const ok=confirm(`Ya tienes datos cargados en Supabase. ¿Deseas agregar esta nueva carga además de la existente?\n\nSi solo quieres actualizar los datos, primero elimina la carga anterior desde el panel Historial.`);
+        if(!ok) return;
+      }
       const uid=await uploadToSupabase(cobros,creditos,file.name);
       activeUploadId=uid;
       const [meta]=await sbGet('liquidacion_uploads',`id=eq.${uid}`);
@@ -1185,6 +1194,9 @@ async function processFile(file) {
     }catch(err){
       console.error('Error procesando archivo:',err);
       toast('Error: '+err.message,'err',7000);
+    } finally {
+      // Reset input para que el mismo archivo pueda subirse de nuevo
+      document.getElementById('file-input').value='';
     }
   };
   reader.readAsArrayBuffer(file);
@@ -1243,9 +1255,18 @@ function getPeriodRange() {
   if (REP.period === 'month') {
     return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: new Date(today.getFullYear(), today.getMonth()+1, 0) };
   }
+  if (REP.period === 'all') {
+    // Cubre desde el año 2000 hasta 2099 — captura todo el historial
+    return { from: new Date(2000, 0, 1), to: new Date(2099, 11, 31) };
+  }
   const fv = document.getElementById('rep-date-from').value;
   const tv = document.getElementById('rep-date-to').value;
-  return { from: fv ? new Date(fv+'T00:00:00') : today, to: tv ? new Date(tv+'T00:00:00') : today };
+  if (!fv || !tv) {
+    // Muestra hint en el label si el usuario aún no puso fechas
+    document.getElementById('rep-period-label').textContent = '⚠️ Selecciona fecha Desde y Hasta';
+    return { from: today, to: today };
+  }
+  return { from: new Date(fv+'T00:00:00'), to: new Date(tv+'T00:00:00') };
 }
 
 function inRange(dateStr, from, to) {
@@ -1263,8 +1284,10 @@ function renderReports() {
   }
   const { from, to } = getPeriodRange();
   const today = stripTime(new Date());
-  const periodNames = { today:'Hoy', week:'Esta semana', month:'Este mes', custom:'Personalizado' };
-  const periodLabel = `${periodNames[REP.period]} · ${fmtD(from)}${from.getTime()!==to.getTime()?' – '+fmtD(to):''}`;
+  const periodNames = { today:'Hoy', week:'Esta semana', month:'Este mes', custom:'Personalizado', all:'Todo el historial' };
+  const periodLabel = REP.period === 'all'
+    ? 'Todo el historial'
+    : `${periodNames[REP.period]} · ${fmtD(from)}${from.getTime()!==to.getTime()?' – '+fmtD(to):''}`;
   document.getElementById('rep-period-label').textContent = periodLabel;
 
   // Subtítulos con timeframe en cada indicador
@@ -1273,9 +1296,9 @@ function renderReports() {
   setSub('r2-sub', `Top 10 por monto · ${periodLabel}`);
   setSub('r3-sub', `Liquidado vs pendiente · ${periodLabel}`);
   setSub('r4-sub', `Facturas abonadas · ${periodLabel}`);
-  setSub('r5-sub', `Todo el historial cargado · ${new Date().getFullYear()}`);
-  setSub('r6-sub', `Todo el historial cargado · ${new Date().getFullYear()}`);
-  setSub('r8-sub', `Cobros pendientes por fecha (liquidaciones + CxC) · Todo el historial pendiente`);
+  setSub('r5-sub', `Por volumen · ${periodLabel}`);
+  setSub('r6-sub', `Cobros, comisiones y eficiencia · ${periodLabel}`);
+  setSub('r8-sub', `Entradas pendientes por día · ${periodLabel}`);
   setSub('r9-sub', `Día de referencia: ${fmtD(from)}`);
   setSub('r10-sub', `${MONS_F[today.getMonth()]} ${today.getFullYear()} · Mes en curso`);
 
@@ -1400,7 +1423,7 @@ function renderReports() {
   const lMP=lM.filter(r=>!r.liquidado).reduce((s,r)=>s+parseFloat(r.monto_liquidar||0),0);
   const cMC=cM.filter(r=>r.abonada).reduce((s,r)=>s+r.monto,0);
   const cMP=cM.filter(r=>!r.abonada).reduce((s,r)=>s+r.monto,0);
-  const sw={};lM.forEach(r=>{const d=parseDate(r.deposito_esperado);if(!d)return;const w=Math.ceil(d.getDate()/7);if(!sw[w])sw[w]={l:0,c:0};sw[w].l+=parseFloat(r.monto_liquidar||0);});
+  const sw={};lM.forEach(r=>{const d=parseDate(r.fecha_venta);if(!d)return;const w=Math.ceil(d.getDate()/7);if(!sw[w])sw[w]={l:0,c:0};sw[w].l+=parseFloat(r.monto_liquidar||0);});
   cM.forEach(r=>{const d=parseDate(r.fecha_pago);if(!d)return;const w=Math.ceil(d.getDate()/7);if(!sw[w])sw[w]={l:0,c:0};sw[w].c+=r.monto;});
   const cvM={};lM.forEach(r=>{const k=(r.cliente||'').toUpperCase().trim();if(!cvM[k])cvM[k]={n:r.cliente,t:0};cvM[k].t+=parseFloat(r.monto_liquidar||0);});cM.forEach(r=>{const k=(r.cliente||'').toUpperCase().trim();if(!cvM[k])cvM[k]={n:r.cliente,t:0};cvM[k].t+=r.monto;});
   const topM=Object.values(cvM).sort((a,b)=>b.t-a.t).slice(0,5);const mxM=topM[0]?.t||1;
@@ -1414,7 +1437,7 @@ function exportPDF(contentId, filename) {
   if (!el || !card) return;
   const { from, to } = getPeriodRange();
   const now = new Date();
-  const win = window.open('', '_blank', 'width=960,height=700');
+  const win = window.open('', '_blank', 'width=960,height=700,noopener,noreferrer');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${filename}</title><style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:#111;padding:32px;background:#fff;}
