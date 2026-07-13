@@ -562,6 +562,7 @@
           <button class="rep-period-btn active" onclick="setPeriod('week',this)">Esta semana</button>
           <button class="rep-period-btn" onclick="setPeriod('month',this)">Este mes</button>
           <button class="rep-period-btn" onclick="setPeriod('custom',this)">Personalizado</button>
+          <button class="rep-period-btn" onclick="setPeriod('all',this)">Todo</button>
         </div>
       </div>
       <div class="rep-filter-group" id="custom-dates" style="display:none;">
@@ -1243,6 +1244,10 @@ function getPeriodRange() {
   if (REP.period === 'month') {
     return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: new Date(today.getFullYear(), today.getMonth()+1, 0) };
   }
+  if (REP.period === 'all') {
+    // Cubre desde el año 2000 hasta 2099 — captura todo el historial
+    return { from: new Date(2000, 0, 1), to: new Date(2099, 11, 31) };
+  }
   const fv = document.getElementById('rep-date-from').value;
   const tv = document.getElementById('rep-date-to').value;
   return { from: fv ? new Date(fv+'T00:00:00') : today, to: tv ? new Date(tv+'T00:00:00') : today };
@@ -1263,7 +1268,7 @@ function renderReports() {
   }
   const { from, to } = getPeriodRange();
   const today = stripTime(new Date());
-  const periodNames = { today:'Hoy', week:'Esta semana', month:'Este mes', custom:'Personalizado' };
+  const periodNames = { today:'Hoy', week:'Esta semana', month:'Este mes', custom:'Personalizado', all:'Todo el historial' };
   const periodLabel = `${periodNames[REP.period]} · ${fmtD(from)}${from.getTime()!==to.getTime()?' – '+fmtD(to):''}`;
   document.getElementById('rep-period-label').textContent = periodLabel;
 
