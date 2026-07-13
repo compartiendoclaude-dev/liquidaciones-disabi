@@ -559,11 +559,11 @@
       <div class="rep-filter-group">
         <label class="rep-filter-label">Período</label>
         <div class="rep-period-btns">
+          <button class="rep-period-btn" onclick="setPeriod('all',this)">Todo</button>
           <button class="rep-period-btn" onclick="setPeriod('today',this)">Hoy</button>
           <button class="rep-period-btn active" onclick="setPeriod('week',this)">Esta semana</button>
           <button class="rep-period-btn" onclick="setPeriod('month',this)">Este mes</button>
           <button class="rep-period-btn" onclick="setPeriod('custom',this)">Personalizado</button>
-          <button class="rep-period-btn" onclick="setPeriod('all',this)">Todo</button>
         </div>
       </div>
       <div class="rep-filter-group" id="custom-dates" style="display:none;">
