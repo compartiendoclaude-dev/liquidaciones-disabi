@@ -1299,7 +1299,7 @@ function renderReports() {
     {label:'Liq. cobradas',val:'$'+fmtC(tLL),sub:liqLiq.length+' cobros',color:'var(--green)'},
     {label:'Liq. pendientes',val:'$'+fmtC(tLP),sub:liqPend.length+' cobros',color:'var(--gold)'},
     {label:'CxC cobrada período',val:'$'+fmtC(tCA),sub:credAbonada.length+' facturas',color:'var(--accent)'},
-    {label:'CxC cartera pendiente',val:'$'+fmtC(tCP),sub:credPendTot.length+' facturas',color:'var(--purple)'},
+    {label:'CxC pendiente período',val:'$'+fmtC(tCP),sub:credPendPeriod.length+' facturas',color:'var(--purple)'},
   ].map(k=>`<div class="rep-kpi"><div class="rep-kpi-label">${k.label}</div><div class="rep-kpi-val" style="color:${k.color}">${k.val}</div><div class="rep-kpi-sub">${k.sub}</div></div>`).join('');
   const mkTable=(rows,cols,data)=>`<table class="rep-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${data.length?data.join(''):'<tr><td colspan="'+cols.length+'" class="rep-empty">Sin datos</td></tr>'}</tbody></table>`;
   document.getElementById('r1-liq-table').innerHTML=mkTable([],['Fecha venta','Depósito esp.','Cliente','Paq.','Monto','Estado'],liqPeriod.sort((a,b)=>new Date(a.fecha_venta)-new Date(b.fecha_venta)).slice(0,10).map(r=>`<tr><td>${fmtD(r.fecha_venta)}</td><td style="color:var(--muted)">${fmtD(r.deposito_esperado)}</td><td>${r.cliente}</td><td>${r.paquetera}</td><td class="num ${r.liquidado?'pos':''}">$${fmtC(r.monto_liquidar)}</td><td>${r.liquidado?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--gold)">Pend.</span>'}</td></tr>`));
