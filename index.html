@@ -748,8 +748,45 @@ const fmtD = d => { if(!d) return '—'; const dt=parseDate(d); return `${DAYS[d
 const fmtC = n => (parseFloat(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 const diffDays = (a,b) => Math.round((b-a)/(1000*60*60*24));
 
-const nextBizDay = d => { let n=new Date(d); do{ n.setDate(n.getDate()+1); }while(n.getDay()===0); return n; };
-const addBizDays = (d,n) => { let dt=new Date(d),a=0; while(a<n){dt.setDate(dt.getDate()+1);if(dt.getDay()!==0)a++;} return dt; };
+// ── ASUETOS EL SALVADOR ──────────────────────────────
+const ASUETOS = new Set([
+  '01-01', '05-01', '05-10', '06-17', '09-15', '11-02', '12-25',
+  '2026-08-05', '2026-08-06',
+]);
+const isAsueto = d => {
+  const mmdd=`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return ASUETOS.has(mmdd)||ASUETOS.has(toISO(d));
+};
+const isNonBiz = d => d.getDay()===0||d.getDay()===6||isAsueto(d);
+const DAYS_SV=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+// Regla TC y Link de pagos:
+// - Lun-Vie: siguiente día CALENDARIO (puede ser sáb o dom, sin ajuste)
+// - Sábado: lunes siguiente (o siguiente hábil si asueto)
+const addTCDays = (d) => {
+  if(d.getDay()===6){ // Sábado → lunes, saltando asuetos
+    let dt=new Date(d); dt.setDate(dt.getDate()+2);
+    while(isAsueto(dt)||dt.getDay()===0) dt.setDate(dt.getDate()+1);
+    return dt;
+  } else { // Lun-Vie y Dom → siguiente día calendario, saltando asuetos
+    let dt=new Date(d); dt.setDate(dt.getDate()+1);
+    while(isAsueto(dt)) dt.setDate(dt.getDate()+1);
+    return dt;
+  }
+};
+
+// Regla Paqueteras: +2 días calendario, si cae sáb/dom/asueto → siguiente hábil
+const addBizDays = (d, n) => {
+  let dt=new Date(d); dt.setDate(dt.getDate()+n);
+  while(isNonBiz(dt)) dt.setDate(dt.getDate()+1);
+  return dt;
+};
+
+const nextBizDay = d => {
+  let dt=new Date(d);
+  do { dt.setDate(dt.getDate()+1); } while(isNonBiz(dt));
+  return dt;
+};
 
 const paqColor = p=>({'XPRESS':'#3b7bff','RAPI':'#f5a623','FORZA':'#22c55e','FOURBOX':'#a855f7','SERFINSA':'#06b6d4','LINK PAGOS':'#f43f5e'}[(p||'').toUpperCase()]||'#6b7a9e');
 const paqBadge = p=>{const u=(p||'').toUpperCase();const c={XPRESS:'badge-xpress',RAPI:'badge-rapi',FORZA:'badge-forza',FOURBOX:'badge-fourbox',SERFINSA:'badge-serfinsa','LINK PAGOS':'badge-link-pagos'}[u]||'badge-other';return`<span class="badge ${c}">${p}</span>`;};
@@ -895,23 +932,23 @@ function parseExcel(data) {
       const liqSi=/^(s[íi]?|yes|y|1|true)$/i.test(liqRaw);
       const liqBase=(mr&&!isNaN(mr)&&mr>0)||liqSi;
 
-      // ── COBROS TC (SERFINSA) ── +1 día hábil
+      // ── COBROS TC (SERFINSA) ── siguiente día calendario (sáb→lunes)
       const tcAmt=cTC>=0?cleanNum(r[cTC]):null;
       if(tcAmt&&tcAmt>0){
         const liqPos=cLiqPos>=0?cleanNum(r[cLiqPos]):null;
         const conf=cConf>=0?r[cConf]:null;
         const liquidado=liqBase||(conf&&String(conf).trim().toLowerCase()==='serfinsa'&&liqPos&&liqPos>0);
         const montoLiq=liqPos&&liqPos>0?liqPos:tcAmt;
-        const dep=addBizDays(fs,1);
+        const dep=addTCDays(fs);
         cobros.push({hoja:sname,mes:monthIdx,fecha_venta:toISO(fs),deposito_esperado:toISO(dep),documento:cD>=0?(r[cD]||''):'',cliente:cCl>=0?(r[cCl]||'—'):'—',paquetera:'SERFINSA',contraentrega:parseFloat(tcAmt.toFixed(2)),monto_liquidar:parseFloat(montoLiq.toFixed(2)),liquidado:Boolean(liquidado),monto_real:mr&&!isNaN(mr)?parseFloat(mr.toFixed(2)):null});
       }
 
-      // ── COBROS LINK DE PAGOS ── +1 día hábil
+      // ── COBROS LINK DE PAGOS ── siguiente día calendario (sáb→lunes)
       const linkAmt=cLink>=0?cleanNum(r[cLink]):null;
       if(linkAmt&&linkAmt>0){
         const liqLink=cLiqLink>=0?cleanNum(r[cLiqLink]):null;
         const montoLiq=liqLink&&liqLink>0?liqLink:linkAmt;
-        const dep=addBizDays(fs,1);
+        const dep=addTCDays(fs);
         cobros.push({hoja:sname,mes:monthIdx,fecha_venta:toISO(fs),deposito_esperado:toISO(dep),documento:cD>=0?(r[cD]||''):'',cliente:cCl>=0?(r[cCl]||'—'):'—',paquetera:'LINK PAGOS',contraentrega:parseFloat(linkAmt.toFixed(2)),monto_liquidar:parseFloat(montoLiq.toFixed(2)),liquidado:Boolean(liqBase),monto_real:mr&&!isNaN(mr)?parseFloat(mr.toFixed(2)):null});
       }
 
