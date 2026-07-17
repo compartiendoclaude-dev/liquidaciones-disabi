@@ -727,6 +727,8 @@ const SB_H = { 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type'
 const sbGet = async (t,q='') => { const r=await fetch(`${SB_URL}/rest/v1/${t}?${q}`,{headers:SB_H}); if(!r.ok) throw new Error(`GET ${t}: ${r.status}`); return r.json(); };
 const sbPost = async (t,b) => { const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:SB_H,body:JSON.stringify(b)}); if(!r.ok){const x=await r.text();throw new Error(`POST ${t}: ${r.status} — ${x}`);}  return r.json(); };
 const sbDel = async (t,m) => { const p=Object.entries(m).map(([k,v])=>`${k}=eq.${v}`).join('&'); const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{method:'DELETE',headers:SB_H}); if(!r.ok) throw new Error(`DEL ${t}: ${r.status}`); };
+// Borra TODAS las filas de una tabla (usa id != UUID imposible como filtro universal)
+const sbDelAll = async (t) => { const r=await fetch(`${SB_URL}/rest/v1/${t}?id=neq.00000000-0000-0000-0000-000000000000`,{method:'DELETE',headers:{...SB_H,'Prefer':'return=minimal'}}); if(!r.ok) throw new Error(`DEL ALL ${t}: ${r.status}`); };
 
 // ── SECURITY: sanitizar HTML antes de insertar en el DOM ──
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -906,21 +908,27 @@ async function uploadToSupabase(cobros, creditos, filename) {
   const prog=(p,m)=>{ pb.style.width=p+'%'; step.textContent=m; };
 
   try{
-    prog(8,'Registrando carga…');
+    // PASO 1: Borrar TODO lo anterior antes de insertar (evita acumulación de cargas)
+    prog(5,'Limpiando datos anteriores…');
+    await sbDelAll('liquidacion_uploads'); // borra en cascada cobros y créditos via FK
+
+    // PASO 2: Registrar nueva carga
+    prog(15,'Registrando carga…');
     const [rec]=await sbPost('liquidacion_uploads',{filename,total_cobros:cobros.length,total_monto:parseFloat(cobros.reduce((s,r)=>s+r.monto_liquidar,0).toFixed(2))});
     const uid=rec.id;
 
-    // Cobros en chunks
+    // PASO 3: Cobros en chunks
     const CHUNK=200;
     for(let ci=0;ci<Math.ceil(cobros.length/CHUNK);ci++){
-      prog(8+Math.round((ci/Math.ceil(cobros.length/CHUNK))*50),`Cobros… (${Math.min((ci+1)*CHUNK,cobros.length)}/${cobros.length})`);
+      prog(15+Math.round((ci/Math.ceil(cobros.length/CHUNK))*50),`Cobros… (${Math.min((ci+1)*CHUNK,cobros.length)}/${cobros.length})`);
       await sbPost('liquidacion_cobros',cobros.slice(ci*CHUNK,(ci+1)*CHUNK).map(r=>({...r,upload_id:uid})));
     }
 
-    // Créditos: borrar los del mismo upload_id si volvieran a subir
-    prog(62,'Guardando créditos…');
+    // PASO 4: Créditos en chunks
+    prog(70,'Guardando créditos…');
     if(creditos.length>0){
       for(let ci=0;ci<Math.ceil(creditos.length/CHUNK);ci++){
+        prog(70+Math.round((ci/Math.ceil(creditos.length/CHUNK))*25),`Créditos… (${Math.min((ci+1)*CHUNK,creditos.length)}/${creditos.length})`);
         await sbPost('liquidacion_creditos',creditos.slice(ci*CHUNK,(ci+1)*CHUNK).map(r=>({...r,upload_id:uid})));
       }
     }
@@ -928,7 +936,7 @@ async function uploadToSupabase(cobros, creditos, filename) {
     prog(100,'¡Listo!');
     await new Promise(r=>setTimeout(r,500));
     modal.classList.remove('show');
-    toast(`${cobros.length} cobros y ${creditos.length} créditos guardados`,'ok');
+    toast(`✓ ${cobros.length} cobros y ${creditos.length} créditos guardados — datos anteriores reemplazados`,'ok');
     return uid;
   } catch(e){
     modal.classList.remove('show');
@@ -1066,15 +1074,27 @@ function renderCred(creditos) {
     const hasProx=c.facturas.some(r=>!r.indefinida&&r.fecha_pago&&parseDate(r.fecha_pago)>=today&&parseDate(r.fecha_pago)<=soon);
     const hasIndef=c.facturas.some(r=>r.indefinida);
     const cls=hasVenc?'vencido':hasProx?'proximo':hasIndef?'indefinido':'futuro';
-    // Next due date
+    // Próxima fecha de pago
     const nextDue=c.facturas.filter(r=>r.fecha_pago&&!r.indefinida).sort((a,b)=>new Date(a.fecha_pago)-new Date(b.fecha_pago))[0];
-    const dueTxt=hasIndef&&!nextDue?'Fecha: INDEFINIDA':nextDue?`Próximo: <strong>${fmtD(nextDue.fecha_pago)}</strong>`:'Sin fecha';
+    const nextDueDate=nextDue?.fecha_pago||null;
+    // Facturas de esa próxima fecha (lo que pagan ESE día)
+    const nextFacts=nextDueDate?c.facturas.filter(r=>r.fecha_pago===nextDueDate):[];
+    const nextAmt=nextFacts.reduce((s,r)=>s+r.monto,0);
+    // Total restante en fechas posteriores
+    const restFacts=c.facturas.filter(r=>r.fecha_pago!==nextDueDate);
+    const restAmt=restFacts.reduce((s,r)=>s+r.monto,0);
     const statusIcon=hasVenc?'🚨':hasProx?'⏰':hasIndef?'❓':'📅';
+    const fechaLbl=hasIndef&&!nextDue?'Sin fecha definida':nextDue?fmtD(nextDue.fecha_pago):'Sin fecha';
+    // Número principal = monto de la próxima entrega; si no hay fecha = total
+    const montoMostrado=nextDueDate?nextAmt:c.total;
     return`<div class="client-card ${cls}">
-      <div class="client-name">${statusIcon} ${c.facturas[0].cliente}</div>
-      <div class="client-docs">${c.facturas.length} factura${c.facturas.length!==1?'s':''}</div>
-      <div class="client-amount"><span>$</span>${fmtC(c.total)}</div>
-      <div class="client-footer"><div class="client-date">${dueTxt}</div></div>
+      <div class="client-name">${statusIcon} ${esc(c.facturas[0].cliente)}</div>
+      <div class="client-docs" style="margin-bottom:4px;">${nextFacts.length||c.facturas.length} factura${(nextFacts.length||c.facturas.length)!==1?'s':''} · <strong style="color:var(--text)">${fechaLbl}</strong></div>
+      <div class="client-amount"><span>$</span>${fmtC(montoMostrado)}</div>
+      <div class="client-footer" style="flex-direction:column;align-items:flex-start;gap:3px;">
+        ${nextDueDate&&restAmt>0?`<div style="font-size:11px;color:var(--muted);">+ $${fmtC(restAmt)} en ${restFacts.length} entrega${restFacts.length!==1?'s':''} posterior${restFacts.length!==1?'es':''}</div>`:''}
+        ${!nextDueDate?`<div style="font-size:11px;color:var(--muted);">Total pendiente: $${fmtC(c.total)}</div>`:''}
+      </div>
     </div>`;
   }).join('');
 
@@ -1181,11 +1201,6 @@ async function processFile(file) {
       if(!cobros.length&&!creditos.length){
         toast('No se encontraron datos. Revisa la consola del navegador (F12) para más detalle.','err',7000);
         return;
-      }
-      // Aviso si ya hay datos cargados — evita duplicados accidentales
-      if(activeUploadId){
-        const ok=confirm(`Ya tienes datos cargados en Supabase. ¿Deseas agregar esta nueva carga además de la existente?\n\nSi solo quieres actualizar los datos, primero elimina la carga anterior desde el panel Historial.`);
-        if(!ok) return;
       }
       const uid=await uploadToSupabase(cobros,creditos,file.name);
       activeUploadId=uid;
