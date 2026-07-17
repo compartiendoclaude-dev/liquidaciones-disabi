@@ -1014,7 +1014,11 @@ async function uploadToSupabase(cobros, creditos, filename) {
 
 // ── RENDER LIQUIDACIONES ──────────────────────────────
 function renderLiq(cobros) {
-  const today=stripTime(new Date()), tom=nextBizDay(today), nn=nextBizDay(tom);
+  const today=stripTime(new Date());
+  // Mañana = día calendario siguiente (puede ser sábado — TC liquida en sábado)
+  const tom=new Date(today); tom.setDate(today.getDate()+1);
+  // Próximo = siguiente día hábil después de mañana (para paqueteras)
+  const nn=nextBizDay(tom);
   const pending=cobros.filter(r=>!r.liquidado);
   const overdue=pending.filter(r=>{ const d=parseDate(r.deposito_esperado); return d&&d<today; });
 
